@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screen/admin/admin_dashboard.dart';
+import 'screen/admin/adminlogin.dart';
 
 void main() {
   runApp(const MainApp());
@@ -12,7 +12,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return  MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AdminDashBoard(),
+      home: AdminLogin(),
     );
   }
 }
