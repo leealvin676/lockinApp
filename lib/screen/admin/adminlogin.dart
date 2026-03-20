@@ -1,4 +1,6 @@
 
+import 'dart:ffi';
+import 'admin_dashboard.dart';
 import 'package:flutter/material.dart';
 
 
@@ -21,7 +23,8 @@ class AdminLogin extends StatelessWidget{
           child: Column(
             children: [
               Image.asset('assets/icons/login_icon.png',
-                height: 80,
+                height: 90,
+                fit: BoxFit.contain,
                ),
               SizedBox(height: 20),
               Text("Admin Portal",
@@ -31,25 +34,65 @@ class AdminLogin extends StatelessWidget{
                     fontWeight: FontWeight.bold
                 ),
               ),
+              Text("Sign in to access admin dashboard"),
               SizedBox(height: 40),
               Padding(
-                padding: EdgeInsets.only(right: 250),
+                padding: EdgeInsets.all(20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Email",
+                    Text("Admin Email",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                     ),
                     TextField(
+                      style: TextStyle(
+                        color: Colors.white
+                      ),
                       decoration: InputDecoration(
-                        border: OutlineInputBorder()
+                        border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.email)
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text("Password",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextField(
+                      style: TextStyle(
+                          color: Colors.white
+                      ),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.lock)
                       ),
                     )
                   ],
                 ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AdminDashBoard()),
+                    );
+                  },
+                child: Text("Admin Sign In",
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold
+                ),),
               )
             ],
           ),
