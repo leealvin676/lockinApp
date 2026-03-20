@@ -21,7 +21,9 @@ class AdminLogin extends StatelessWidget{
           child: Column(
             children: [
               Image.asset('assets/icons/login_icon.png',
+                height: 80,
                ),
+              SizedBox(height: 20),
               Text("Admin Portal",
                 style: TextStyle(
                     color: Colors.white,
@@ -29,7 +31,26 @@ class AdminLogin extends StatelessWidget{
                     fontWeight: FontWeight.bold
                 ),
               ),
-              Text("Admin Email"),
+              SizedBox(height: 40),
+              Padding(
+                padding: EdgeInsets.only(right: 250),
+                child: Column(
+                  children: [
+                    Text("Email",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold
+                    ),
+                    ),
+                    TextField(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder()
+                      ),
+                    )
+                  ],
+                ),
+              )
             ],
           ),
         ),
