@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import 'package:lockinapp/screen/admin/workout/workout_page.dart';
+import 'package:lockinapp/screen/admin/trainer/trainer_page.dart';
 
 class AdminDashBoard extends StatefulWidget {
   const AdminDashBoard({super.key});
@@ -28,9 +29,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
   List<Widget> _pages = [
     _mainBody(),
     WorkoutPage(),
-    Center(
-      child: Text('Trainer Page', style: TextStyle(color: Colors.white)),
-    ),
+    TrainerPage(),
     Center(
       child: Text('User Page', style: TextStyle(color: Colors.white)),
     ),
