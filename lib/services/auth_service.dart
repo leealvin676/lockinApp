@@ -1,18 +1,25 @@
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  final Box userBox = Hive.box('users');
+  Future<Box> _getUserBox() async {
+    if (!Hive.isBoxOpen('users')) {
+      await Hive.openBox('users');
+    }
+    return Hive.box('users');
+  }
 
   // REGISTER
   Future<bool> register(String name, String email, String password) async {
-    // check if user already exists
-    for (var user in userBox.values) {
+    final box = await _getUserBox();
+
+    for (var user in box.values) {
       if (user['email'] == email) {
         return false;
       }
     }
 
-    await userBox.add({
+    await box.add({
       "name": name,
       "email": email,
       "password": password,
@@ -23,9 +30,15 @@ class AuthService {
 
   // LOGIN
   Future<bool> login(String email, String password) async {
-    for (var user in userBox.values) {
-      if (user['email'] == email &&
-          user['password'] == password) {
+    final box = await _getUserBox();
+
+    for (var user in box.values) {
+      if (user['email'] == email && user['password'] == password) {
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.setString('name', user['name']);
+        await prefs.setString('currentUser', email);
+
         return true;
       }
     }

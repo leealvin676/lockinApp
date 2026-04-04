@@ -28,9 +28,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: TextField(
         controller: controller,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-        inputFormatters: isNumber
-            ? [FilteringTextInputFormatter.digitsOnly]
-            : null,
+        inputFormatters:
+        isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
@@ -72,8 +71,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
               content: SingleChildScrollView(
                 child: Column(
                   children: [
-
-                    // TYPE DROPDOWN
                     DropdownButton<String>(
                       value: selectedType,
                       dropdownColor: Colors.grey[900],
@@ -92,13 +89,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
                     const SizedBox(height: 10),
 
-                    //CONDITIONAL FIELDS
-
                     if (selectedType == "Strength") ...[
                       _buildTextField(setsController, "Sets", isNumber: true),
                       _buildTextField(repsController, "Reps", isNumber: true),
                     ] else ...[
-                      _buildTextField(durationController, "Duration (min)", isNumber: true),
+                      _buildTextField(durationController, "Duration (min)",
+                          isNumber: true),
                     ],
 
                     _buildTextField(notesController, "Notes"),
@@ -114,16 +110,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   onPressed: () {
                     final updatedWorkout = {
                       'type': selectedType,
-                      'duration': (selectedType == "Strength")
-                          ? ""
-                          : durationController.text,
-                      'sets': (selectedType == "Strength")
-                          ? setsController.text
-                          : "",
-                      'reps': (selectedType == "Strength")
-                          ? repsController.text
-                          : "",
+                      'duration':
+                      (selectedType == "Strength") ? "" : durationController.text,
+                      'sets': (selectedType == "Strength") ? setsController.text : "",
+                      'reps': (selectedType == "Strength") ? repsController.text : "",
                       'notes': notesController.text,
+                      'date': workout['date'], // preserve date
                     };
 
                     workoutBox.putAt(index, updatedWorkout);
@@ -168,11 +160,22 @@ class _HistoryScreenState extends State<HistoryScreen> {
             itemBuilder: (context, index) {
               final workout = box.getAt(index);
 
+              String formattedDate = "Unknown date";
+
+              if (workout['date'] != null) {
+                final parsedDate = DateTime.tryParse(workout['date']);
+                if (parsedDate != null) {
+                  formattedDate =
+                  "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
+                }
+              }
+
               return Dismissible(
-                key: Key(index.toString()),
+                // ✅ FIXED: stable unique key
+                key: Key(workout['date'] ?? index.toString()),
+
                 direction: DismissDirection.endToStart,
 
-                //CONFIRM BEFORE DELETE
                 confirmDismiss: (direction) async {
                   return await showDialog(
                     context: context,
@@ -203,9 +206,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   );
                 },
 
-                // Only runs if user presses "Delete"
-                onDismissed: (direction) {
-                  workoutBox.deleteAt(index);
+                // ✅ FIXED: delete using Hive key instead of index
+                onDismissed: (direction) async {
+                  final key = box.keyAt(index);
+                  await workoutBox.delete(key);
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Workout deleted")),
@@ -230,7 +234,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -251,6 +254,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             },
                           ),
                         ],
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
 
                       const SizedBox(height: 5),
