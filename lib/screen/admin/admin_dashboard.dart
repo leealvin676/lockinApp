@@ -28,28 +28,30 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
     );
   }
 
-  List<Widget> get _pages =>
-      [
-        _mainBody(),
-        WorkoutPage(),
-        TrainerPage(),
-        UserPage(),
-      ];
+  // 🔥 用 get（避免卡住）
+  List<Widget> get _pages => [
+    _mainBody(),
+    WorkoutPage(),
+    TrainerPage(),
+    UserPage(),
+  ];
 
+  // ================= APP BAR =================
   AppBar _buildAppBar() {
     return AppBar(
-      backgroundColor: Color(0xFF333333),
+      backgroundColor: const Color(0xFF333333),
       title: const Text.rich(
         TextSpan(
           children: [
             TextSpan(
               text: 'LockIn',
-              style: TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold),
+              style:
+              TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             TextSpan(
               text: 'Admin',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              style:
+              TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -57,31 +59,44 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
       actions: [
         IconButton(
           onPressed: () {},
-          icon: Icon(Icons.logout, color: Colors.red),
+          icon: const Icon(Icons.logout, color: Colors.red),
         ),
       ],
     );
   }
 
+  // ================= MAIN DASHBOARD =================
   Widget _mainBody() {
     return FutureBuilder(
-
-
-      future: Supabase.instance.client.from('profiles').select(),
+      future: Future.wait([
+        Supabase.instance.client.from('profiles').select(),
+        Supabase.instance.client.from('workouts').select(),
+        Supabase.instance.client.from('trainers').select(),
+      ]),
       builder: (context, snapshot) {
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
         int totalUsers = 0;
+        int totalWorkouts = 0;
+        int totalTrainers = 0;
 
         if (snapshot.hasData) {
           final data = snapshot.data as List;
-          totalUsers = data.length;
+
+          totalUsers = (data[0] as List).length;
+          totalWorkouts = (data[1] as List).length;
+          totalTrainers = (data[2] as List).length;
         }
 
         return Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Admin Dashboard',
                 style: TextStyle(
                   color: Colors.white,
@@ -89,36 +104,38 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Text('Welcome Back', style: TextStyle(color: Colors.grey)),
-              SizedBox(height: 30),
+              const Text('Welcome Back',
+                  style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 30),
 
-
+              // ================= USERS =================
               Container(
                 height: 150,
                 width: 350,
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color(0xFF444444),
+                  color: const Color(0xFF444444),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Total Users',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     Row(
                       children: [
-                        Icon(Icons.people, color: Colors.white),
-                        SizedBox(width: 8),
+                        const Icon(Icons.people, color: Colors.white),
+                        const SizedBox(width: 8),
                         Text(
-                          '$totalUsers', // 🔥 动态数据
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+                          '$totalUsers',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 18),
                         ),
                       ],
                     ),
@@ -126,55 +143,76 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
                 ),
               ),
 
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-              // 下面两个保持不动（你原本设计）
+              // ================= WORKOUT =================
               Container(
                 height: 150,
                 width: 350,
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color(0xFF444444),
+                  color: const Color(0xFF444444),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Workout Type',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    Spacer(),
-                    Row(children: [Icon(Icons.people), Text('120')]),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        const Icon(Icons.fitness_center, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$totalWorkouts',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 18),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
 
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
 
+              // ================= TRAINERS =================
               Container(
                 height: 150,
                 width: 350,
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Color(0xFF444444),
+                  color: const Color(0xFF444444),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Trainer',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    Spacer(),
-                    Row(children: [Icon(Icons.people), Text('120')]),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        const Icon(Icons.person, color: Colors.white),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$totalTrainers',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 18),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -185,6 +223,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
     );
   }
 
+  // ================= BOTTOM NAV =================
   BottomNavigationBar _bottom(int currentIndex, Function(int) onTap) {
     return BottomNavigationBar(
       backgroundColor: Colors.black,
@@ -195,7 +234,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
       currentIndex: currentIndex,
       onTap: onTap,
 
-      items: [
+      items: const [
         BottomNavigationBarItem(
             icon: Icon(Icons.dashboard), label: 'DashBoard'),
         BottomNavigationBarItem(

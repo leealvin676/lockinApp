@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockinapp/MainNavigation.dart';
 
 
 import 'package:lockinapp/screen/add_workout_screen.dart';
@@ -35,8 +36,7 @@ class MyApp extends StatelessWidget {
       title: 'LockIN App',
       theme: ThemeData.dark(),
 
-
-      initialRoute: '/login',
+      initialRoute: '/login', // ✅ 保留这个
 
       routes: {
         // =====================
@@ -44,7 +44,10 @@ class MyApp extends StatelessWidget {
         // =====================
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
+
+        // 🔥🔥🔥 这里改！
+        '/home': (context) => const MainNavigation(),
+
         '/addWorkout': (context) => const AddWorkoutScreen(),
         '/history': (context) => const HistoryScreen(),
 
@@ -55,7 +58,7 @@ class MyApp extends StatelessWidget {
         },
 
         // =====================
-        // ADMIN 🔥
+        // ADMIN
         // =====================
         '/adminLogin': (context) => const AdminLogin(),
       },

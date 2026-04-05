@@ -12,21 +12,73 @@ class _UserPageState extends State<UserPage> {
 
   final supabase = Supabase.instance.client;
 
-  List users = [];
+  List<Map<String, dynamic>> users = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchUsers();
+
+    // ✅ 正确：等 UI build 完才 fetch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchUsers();
+    });
   }
 
   // ================= FETCH USERS =================
   Future<void> fetchUsers() async {
-    final data = await supabase.from('profiles').select();
+    try {
+      final data = await supabase.from('profiles').select();
 
-    setState(() {
-      users = data;
-    });
+      if (!mounted) return;
+
+      setState(() {
+        users = List<Map<String, dynamic>>.from(data);
+        isLoading = false;
+      });
+
+    } catch (e) {
+      print("Fetch error: $e");
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to load users")),
+      );
+    }
+  }
+
+  // ================= DELETE =================
+  Future<void> _deleteUser(int index) async {
+    final id = users[index]['id'];
+
+    try {
+      await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', id);
+
+      if (!mounted) return;
+
+      setState(() {
+        users.removeAt(index);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User deleted")),
+      );
+
+    } catch (e) {
+      print("Delete error: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Delete failed")),
+      );
+    }
   }
 
   @override
@@ -53,7 +105,11 @@ class _UserPageState extends State<UserPage> {
             const SizedBox(height: 20),
 
             Expanded(
-              child: users.isEmpty
+              child: isLoading
+                  ? const Center(
+                child: CircularProgressIndicator(),
+              )
+                  : users.isEmpty
                   ? const Center(
                 child: Text(
                   "No users",
@@ -88,7 +144,6 @@ class _UserPageState extends State<UserPage> {
                           ),
                         ),
 
-                        // 🗑 Delete only
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteUser(index),
@@ -103,15 +158,5 @@ class _UserPageState extends State<UserPage> {
         ),
       ),
     );
-  }
-
-  // ================= DELETE =================
-  void _deleteUser(int index) async {
-    await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', users[index]['id']);
-
-    fetchUsers();
   }
 }

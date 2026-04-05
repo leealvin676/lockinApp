@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:lockinapp/widgets/animated_workout_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
-import 'package:lockinapp/services/db_helper.dart'; // ✅ 新增
+import 'package:lockinapp/services/db_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int caloriesBurned = 0;
   int dailyGoal = 0;
 
+  List workouts = [];
+  bool isLoadingWorkouts = true;
+
   final heightController = TextEditingController();
   final weightController = TextEditingController();
   final bodyFatController = TextEditingController();
@@ -32,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
     loadStats();
     loadBodyData();
     loadGoal();
+    fetchWorkouts();
   }
 
   @override
@@ -59,6 +64,32 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> fetchWorkouts() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('workouts')
+          .select();
+
+      print("DATA: $data");
+
+      if (!mounted) return;
+
+      setState(() {
+        workouts = data;
+        isLoadingWorkouts = false;
+      });
+
+    } catch (e) {
+      print("Workout fetch error: $e");
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoadingWorkouts = false;
+      });
+    }
+  }
+
   // ✅ BODY DATA（改为 SharedPreferences）
   void saveBodyData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -84,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ✅ STATS（改为 SQLite）
+
   void loadStats() async {
     final workouts = await DBHelper().getWorkouts();
 
@@ -449,67 +480,62 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 20),
 
               // WORKOUT TYPES
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[900],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Workout Types",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    AnimatedWorkoutCard(
-                      title: "Cardio",
-                      imagePath: "assets/images/cardio.jpg",
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/workoutSession',
-                          arguments: "Cardio",
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    AnimatedWorkoutCard(
-                      title: "Strength",
-                      imagePath: "assets/images/strength.jpg",
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/workoutSession',
-                          arguments: "Strength",
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    AnimatedWorkoutCard(
-                      title: "Yoga",
-                      imagePath: "assets/images/yoga.jpg",
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/workoutSession',
-                          arguments: "Yoga",
-                        );
-                      },
-                    ),
-                  ],
-                ),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  const Text(
+                    "Workout Types",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  isLoadingWorkouts
+                      ? const Center(child: CircularProgressIndicator())
+                      : workouts.isEmpty
+                      ? const Text(
+                    "No workouts",
+                    style: TextStyle(color: Colors.white),
+                  )
+                      : Column(
+                    children: workouts.map((workout) {
+
+                      final name = workout['name'];
+
+                      return Column(
+                        children: [
+                          AnimatedWorkoutCard(
+                            title: name,
+                            imagePath: "assets/images/cardio.jpg",
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/workoutSession',
+                                arguments: name,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      );
+
+                    }).toList(),
+                  ),
+
+                ],
+              ),
+            ),
             ],
           ),
         ),
