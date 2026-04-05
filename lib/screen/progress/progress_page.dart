@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '/services/db_helper.dart';
 
 const bgColor = Colors.black;
 const cardColor = Color(0xFF2C2C2C);
@@ -15,13 +16,62 @@ class ProgressPage extends StatefulWidget {
 }
 
 class _ProgressPageState extends State<ProgressPage> {
+
+  List<double> weeklyCalories = List.filled(7, 0);
+  List<double> weeklyMinutes = List.filled(7, 0);
+
+  int totalMinutes = 0;
+  int totalCalories = 0;
+  int streak = 0;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadProgress();
+  }
+
+  Future<void> loadProgress() async {
+    final data = await DBHelper().getWorkouts();
+
+    int minutes = 0;
+    int calories = 0;
+
+    List<double> tempCalories = List.filled(7, 0);
+    List<double> tempMinutes = List.filled(7, 0);
+
+    for (var w in data) {
+      final duration = (w['duration'] as int? ?? 0);
+      final date = DateTime.tryParse(w['date'] ?? '');
+
+      minutes += duration;
+      calories += duration * 5;
+
+      if (date != null) {
+        int dayIndex = date.weekday - 1; // Mon=0
+
+        tempMinutes[dayIndex] += duration;
+        tempCalories[dayIndex] += duration * 5;
+      }
+    }
+
+    setState(() {
+      totalMinutes = minutes;
+      totalCalories = calories;
+      streak = data.length;
+
+      weeklyCalories = tempCalories;
+      weeklyMinutes = tempMinutes;
+
+      isLoading = false;
+    });
+  }
   int selected = 0;
 
   TextEditingController heightController = TextEditingController();
   TextEditingController weightController = TextEditingController();
 
   double bmi = 0;
-  int streak = 2;
 
   void calculateBMI() {
     double h = double.tryParse(heightController.text) ?? 0;
@@ -87,9 +137,9 @@ class _ProgressPageState extends State<ProgressPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _card(Icons.local_fire_department, "750", "Week\nCalories", Colors.orange),
-        _card(Icons.timer, "145", "Week\nMinutes", Colors.blue),
-        _card(Icons.bolt, "2", "Day\nStreak", Colors.purple),
+        _card(Icons.local_fire_department, "$totalCalories", "Week\nCalories", Colors.orange),
+        _card(Icons.timer, "$totalMinutes", "Week\nMinutes", Colors.blue),
+        _card(Icons.bolt, "$streak", "Day\nStreak", Colors.purple),
       ],
     );
   }
@@ -191,14 +241,9 @@ class _ProgressPageState extends State<ProgressPage> {
             isCurved: true,
             color: Colors.blue,
             barWidth: 3,
-            spots: [
-              FlSpot(0, 0),
-              FlSpot(1, 0),
-              FlSpot(2, 0),
-              FlSpot(3, 100),
-              FlSpot(4, 150),
-              FlSpot(5, 450),
-            ],
+            spots: List.generate(7, (index) {
+              return FlSpot(index.toDouble(), weeklyCalories[index]);
+            }),
           ),
         ],
       ),
@@ -217,17 +262,17 @@ class _ProgressPageState extends State<ProgressPage> {
       BarChartData(
         gridData: FlGridData(show: true),
         borderData: FlBorderData(show: false),
-        barGroups: [
-          BarChartGroupData(
-              x: 0,
-              barRods: [BarChartRodData(toY: 30, color: Colors.orange)]),
-          BarChartGroupData(
-              x: 1,
-              barRods: [BarChartRodData(toY: 45, color: Colors.blue)]),
-          BarChartGroupData(
-              x: 2,
-              barRods: [BarChartRodData(toY: 60, color: Colors.purple)]),
-        ],
+        barGroups: List.generate(7, (index) {
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: weeklyMinutes[index],
+                color: Colors.orange,
+              ),
+            ],
+          );
+        }),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screen/home_screen.dart';
+import 'screen/progress/progress_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -14,7 +15,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final pages = [
     const HomeScreen(),
     const Center(child: Text("Workout", style: TextStyle(color: Colors.white))),
-    const Center(child: Text("Progress", style: TextStyle(color: Colors.white))),
+    const ProgressPage(),
     const Center(child: Text("Profile", style: TextStyle(color: Colors.white))),
   ];
 
