@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import '../services/db_helper.dart';
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String? workoutType;
@@ -33,22 +33,24 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
     timer?.cancel();
   }
 
-  void finishWorkout() {
+  void finishWorkout() async {
     stopTimer();
 
-    final durationMinutes = (seconds / 60).round();
+    final durationMinutes = (seconds / 60).ceil();
 
-    // Simple calorie estimate (you can improve this later)
     final caloriesBurned = durationMinutes * 5;
 
-    final box = Hive.box('workouts');
 
-    box.add({
+    await DBHelper().insertWorkout({
       "date": DateTime.now().toIso8601String(),
-      "duration": durationMinutes.toString(),
-      "calories": caloriesBurned.toString(),
+      "duration": durationMinutes,
+      "sets": null,
+      "reps": null,
+      "notes": "",
       "type": widget.workoutType ?? "General",
     });
+
+    print("WORKOUT SAVED 🔥"); // debug
 
     Navigator.pop(context, true);
   }
@@ -100,8 +102,8 @@ class _WorkoutSessionScreenState extends State<WorkoutSessionScreen> {
               onPressed: finishWorkout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.lime,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 40, vertical: 16),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               ),
               child: const Text(
                 "Finish Workout",

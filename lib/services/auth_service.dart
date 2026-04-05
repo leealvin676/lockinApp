@@ -1,47 +1,68 @@
-import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
-  Future<Box> _getUserBox() async {
-    if (!Hive.isBoxOpen('users')) {
-      await Hive.openBox('users');
-    }
-    return Hive.box('users');
-  }
+  final supabase = Supabase.instance.client;
 
-  // REGISTER
-  Future<bool> register(String name, String email, String password) async {
-    final box = await _getUserBox();
+  // ================= REGISTER =================
+  Future<String?> register(String name, String email, String password) async {
+    try {
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'name': name},
+      );
 
-    for (var user in box.values) {
-      if (user['email'] == email) {
-        return false;
+      if (response.user == null) {
+        return "Registration failed";
       }
+
+      await supabase.from('profiles').insert({
+        'id': response.user!.id,
+        'email': email,
+        'name': name,
+      });
+
+      return null;
+
+    } catch (e) {
+      print("REGISTER ERROR: $e");
+      return e.toString();
     }
-
-    await box.add({
-      "name": name,
-      "email": email,
-      "password": password,
-    });
-
-    return true;
   }
 
-  // LOGIN
+  // ================= LOGIN =================
   Future<bool> login(String email, String password) async {
-    final box = await _getUserBox();
 
-    for (var user in box.values) {
-      if (user['email'] == email && user['password'] == password) {
+    if (email == "admin@lockin.com" && password == "123456") {
+      return true;
+    }
+
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user != null) {
         final prefs = await SharedPreferences.getInstance();
-
-        await prefs.setString('name', user['name']);
         await prefs.setString('currentUser', email);
 
         return true;
       }
+
+      return false;
+    } catch (e) {
+      print("LOGIN ERROR: $e");
+      return false;
     }
-    return false;
+  }
+
+  // ================= LOGOUT =================
+  Future<void> logout() async {
+    await supabase.auth.signOut();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('currentUser');
   }
 }

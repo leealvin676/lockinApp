@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../services/db_helper.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -10,12 +10,20 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  late Box workoutBox;
+
+  List<Map<String, dynamic>> workouts = [];
 
   @override
   void initState() {
     super.initState();
-    workoutBox = Hive.box('workouts');
+    loadWorkouts();
+  }
+
+  void loadWorkouts() async {
+    final data = await DBHelper().getWorkouts();
+    setState(() {
+      workouts = data;
+    });
   }
 
   Widget _buildTextField(
@@ -45,23 +53,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _showEditDialog(BuildContext context, int index, Map workout) {
+  void _showEditDialog(BuildContext context, Map workout) {
     String selectedType = workout['type'];
 
     TextEditingController durationController =
-    TextEditingController(text: workout['duration']);
+    TextEditingController(text: workout['duration']?.toString() ?? "");
     TextEditingController setsController =
-    TextEditingController(text: workout['sets']);
+    TextEditingController(text: workout['sets']?.toString() ?? "");
     TextEditingController repsController =
-    TextEditingController(text: workout['reps']);
+    TextEditingController(text: workout['reps']?.toString() ?? "");
     TextEditingController notesController =
-    TextEditingController(text: workout['notes']);
+    TextEditingController(text: workout['notes'] ?? "");
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setStateDialog) {
             return AlertDialog(
               backgroundColor: Colors.grey[900],
               title: const Text(
@@ -81,7 +89,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         DropdownMenuItem(value: "Yoga", child: Text("Yoga")),
                       ],
                       onChanged: (value) {
-                        setState(() {
+                        setStateDialog(() {
                           selectedType = value!;
                         });
                       },
@@ -93,8 +101,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       _buildTextField(setsController, "Sets", isNumber: true),
                       _buildTextField(repsController, "Reps", isNumber: true),
                     ] else ...[
-                      _buildTextField(durationController, "Duration (min)",
-                          isNumber: true),
+                      _buildTextField(durationController, "Duration (min)", isNumber: true),
                     ],
 
                     _buildTextField(notesController, "Notes"),
@@ -107,18 +114,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: const Text("Cancel"),
                 ),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final updatedWorkout = {
                       'type': selectedType,
-                      'duration':
-                      (selectedType == "Strength") ? "" : durationController.text,
-                      'sets': (selectedType == "Strength") ? setsController.text : "",
-                      'reps': (selectedType == "Strength") ? repsController.text : "",
+                      'duration': selectedType == "Strength"
+                          ? null
+                          : int.tryParse(durationController.text) ?? 0,
+                      'sets': selectedType == "Strength"
+                          ? int.tryParse(setsController.text) ?? 0
+                          : null,
+                      'reps': selectedType == "Strength"
+                          ? int.tryParse(repsController.text) ?? 0
+                          : null,
                       'notes': notesController.text,
-                      'date': workout['date'], // preserve date
+                      'date': workout['date'],
                     };
 
-                    workoutBox.putAt(index, updatedWorkout);
+                    await DBHelper().updateWorkout(
+                      workout['id'],
+                      updatedWorkout,
+                    );
+
+                    loadWorkouts();
 
                     Navigator.pop(context);
                   },
@@ -143,151 +160,116 @@ class _HistoryScreenState extends State<HistoryScreen> {
         title: const Text("Workout History"),
         backgroundColor: Colors.black,
       ),
-      body: ValueListenableBuilder(
-        valueListenable: workoutBox.listenable(),
-        builder: (context, Box box, _) {
-          if (box.isEmpty) {
-            return const Center(
-              child: Text(
-                "No workouts yet",
-                style: TextStyle(color: Colors.white),
-              ),
-            );
+
+      body: workouts.isEmpty
+          ? const Center(
+        child: Text(
+          "No workouts yet",
+          style: TextStyle(color: Colors.white),
+        ),
+      )
+          : ListView.builder(
+        itemCount: workouts.length,
+        itemBuilder: (context, index) {
+          final workout = workouts[index];
+
+          String formattedDate = "Unknown date";
+
+          if (workout['date'] != null) {
+            final parsedDate = DateTime.tryParse(workout['date']);
+            if (parsedDate != null) {
+              formattedDate =
+              "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
+            }
           }
 
-          return ListView.builder(
-            itemCount: box.length,
-            itemBuilder: (context, index) {
-              final workout = box.getAt(index);
+          return Dismissible(
+            key: Key(workout['id'].toString()),
 
-              String formattedDate = "Unknown date";
+            direction: DismissDirection.endToStart,
 
-              if (workout['date'] != null) {
-                final parsedDate = DateTime.tryParse(workout['date']);
-                if (parsedDate != null) {
-                  formattedDate =
-                  "${parsedDate.day}/${parsedDate.month}/${parsedDate.year}";
-                }
-              }
+            onDismissed: (direction) async {
+              await DBHelper().deleteWorkout(workout['id']);
 
-              return Dismissible(
-                // ✅ FIXED: stable unique key
-                key: Key(workout['date'] ?? index.toString()),
+              loadWorkouts();
 
-                direction: DismissDirection.endToStart,
-
-                confirmDismiss: (direction) async {
-                  return await showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      backgroundColor: Colors.grey[900],
-                      title: const Text(
-                        "Delete Workout",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      content: const Text(
-                        "Are you sure you want to delete this workout?",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text(
-                            "Delete",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-
-                // ✅ FIXED: delete using Hive key instead of index
-                onDismissed: (direction) async {
-                  final key = box.keyAt(index);
-                  await workoutBox.delete(key);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Workout deleted")),
-                  );
-                },
-
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 20),
-                  color: Colors.red,
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.all(10),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              workout['type'],
-                              style: const TextStyle(
-                                color: Colors.limeAccent,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.white),
-                            onPressed: () {
-                              _showEditDialog(context, index, workout);
-                            },
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 5),
-
-                      Text(
-                        formattedDate,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-
-                      const SizedBox(height: 5),
-
-                      if (workout['duration'] != "")
-                        Text("Duration: ${workout['duration']} min",
-                            style: const TextStyle(color: Colors.white)),
-
-                      if (workout['sets'] != "")
-                        Text("Sets: ${workout['sets']}",
-                            style: const TextStyle(color: Colors.white)),
-
-                      if (workout['reps'] != "")
-                        Text("Reps: ${workout['reps']}",
-                            style: const TextStyle(color: Colors.white)),
-
-                      if (workout['notes'] != "")
-                        Text("Notes: ${workout['notes']}",
-                            style: const TextStyle(color: Colors.grey)),
-                    ],
-                  ),
-                ),
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Workout deleted")),
               );
             },
+
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              color: Colors.red,
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          workout['type'] ?? "",
+                          style: const TextStyle(
+                            color: Colors.limeAccent,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.white),
+                        onPressed: () {
+                          _showEditDialog(context, workout);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  if (workout['duration'] != null)
+                    Text("Duration: ${workout['duration']} min",
+                        style: const TextStyle(color: Colors.white)),
+
+                  if (workout['sets'] != null)
+                    Text("Sets: ${workout['sets']}",
+                        style: const TextStyle(color: Colors.white)),
+
+                  if (workout['reps'] != null)
+                    Text("Reps: ${workout['reps']}",
+                        style: const TextStyle(color: Colors.white)),
+
+                  if (workout['notes'] != null &&
+                      workout['notes'] != "")
+                    Text("Notes: ${workout['notes']}",
+                        style: const TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ),
           );
         },
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TrainerPage extends StatefulWidget {
   const TrainerPage({super.key});
@@ -8,10 +9,36 @@ class TrainerPage extends StatefulWidget {
 }
 
 class _TrainerPageState extends State<TrainerPage> {
-  List<Map<String, String>> trainers = [
-    {'name': 'John', 'type': 'Strength'},
-    {'name': 'Amy', 'type': 'Yoga'},
-  ];
+
+  final supabase = Supabase.instance.client;
+
+  List trainers = [];
+  List workoutTypes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchTrainers();
+    fetchWorkoutTypes();
+  }
+
+  // ================= FETCH TRAINERS =================
+  Future<void> fetchTrainers() async {
+    final data = await supabase.from('trainers').select();
+
+    setState(() {
+      trainers = data;
+    });
+  }
+
+  // ================= FETCH WORKOUT TYPES =================
+  Future<void> fetchWorkoutTypes() async {
+    final data = await supabase.from('workouts').select();
+
+    setState(() {
+      workoutTypes = data;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,12 +46,12 @@ class _TrainerPageState extends State<TrainerPage> {
       backgroundColor: Colors.black,
 
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Trainers',
               style: TextStyle(
                 color: Colors.white,
@@ -33,46 +60,57 @@ class _TrainerPageState extends State<TrainerPage> {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             Expanded(
-              child: ListView.builder(
+              child: trainers.isEmpty
+                  ? const Center(
+                child: Text(
+                  "No trainers",
+                  style: TextStyle(color: Colors.white),
+                ),
+              )
+                  : ListView.builder(
                 itemCount: trainers.length,
                 itemBuilder: (context, index) {
+                  final trainer = trainers[index];
+
                   return Container(
-                    margin: EdgeInsets.only(bottom: 10),
-                    padding: EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Color(0xFF444444),
+                      color: const Color(0xFF444444),
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.person, color: Colors.red),
-                        SizedBox(width: 10),
+                        const Icon(Icons.person, color: Colors.red),
+                        const SizedBox(width: 10),
 
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                trainers[index]['name']!,
-                                style: TextStyle(color: Colors.white),
+                                trainer['name'],
+                                style: const TextStyle(color: Colors.white),
                               ),
                               Text(
-                                trainers[index]['type']!,
-                                style: TextStyle(color: Colors.grey),
+                                trainer['type'],
+                                style: const TextStyle(color: Colors.grey),
                               ),
                             ],
                           ),
                         ),
+
                         IconButton(
-                          icon: Icon(Icons.edit, color: Colors.white),
+                          icon: const Icon(Icons.edit, color: Colors.white),
                           onPressed: () => _editTrainer(index),
                         ),
+
                         IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteTrainer(index), // ✅ 这里
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteTrainer(index),
                         ),
                       ],
                     ),
@@ -87,36 +125,43 @@ class _TrainerPageState extends State<TrainerPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,
         onPressed: _addTrainer,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
 
+  // ================= ADD =================
   void _addTrainer() {
     TextEditingController nameController = TextEditingController();
-    String selectedType = 'Strength';
+
+    String selectedType = workoutTypes.isNotEmpty
+        ? workoutTypes[0]['name']
+        : '';
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Trainer'),
+          title: const Text('Add Trainer'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: InputDecoration(hintText: 'Trainer name'),
+                decoration: const InputDecoration(hintText: 'Trainer name'),
               ),
 
+              const SizedBox(height: 10),
+
               DropdownButton<String>(
-                value: selectedType,
-                items: ['Strength', 'Cardio', 'Yoga']
-                    .map(
-                      (type) =>
-                          DropdownMenuItem(value: type, child: Text(type)),
-                    )
-                    .toList(),
+                value: selectedType.isEmpty ? null : selectedType,
+                isExpanded: true,
+                items: workoutTypes.map<DropdownMenuItem<String>>((workout) {
+                  return DropdownMenuItem(
+                    value: workout['name'],
+                    child: Text(workout['name']),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   selectedType = value!;
                 },
@@ -126,19 +171,21 @@ class _TrainerPageState extends State<TrainerPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  trainers.add({
-                    'name': nameController.text,
-                    'type': selectedType,
-                  });
+              onPressed: () async {
+                if (nameController.text.trim().isEmpty || selectedType.isEmpty) return;
+
+                await supabase.from('trainers').insert({
+                  'name': nameController.text.trim(),
+                  'type': selectedType,
                 });
+
                 Navigator.pop(context);
+                fetchTrainers();
               },
-              child: Text('Add'),
+              child: const Text('Add'),
             ),
           ],
         );
@@ -146,30 +193,61 @@ class _TrainerPageState extends State<TrainerPage> {
     );
   }
 
+  // ================= EDIT =================
   void _editTrainer(int index) {
-    TextEditingController controller = TextEditingController(
-      text: trainers[index]['name'],
-    );
+    TextEditingController controller =
+    TextEditingController(text: trainers[index]['name']);
+
+    String selectedType = trainers[index]['type'];
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Trainer'),
-          content: TextField(controller: controller),
+          title: const Text('Edit Trainer'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: controller),
+
+              const SizedBox(height: 10),
+
+              DropdownButton<String>(
+                value: selectedType,
+                isExpanded: true,
+                items: workoutTypes.map<DropdownMenuItem<String>>((workout) {
+                  return DropdownMenuItem(
+                    value: workout['name'],
+                    child: Text(workout['name']),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  selectedType = value!;
+                },
+              ),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  trainers[index]['name'] = controller.text;
-                });
-                Navigator.pop(context);
+              onPressed: () async {
+                if (controller.text.trim().isNotEmpty) {
+                  await supabase
+                      .from('trainers')
+                      .update({
+                    'name': controller.text.trim(),
+                    'type': selectedType,
+                  })
+                      .eq('id', trainers[index]['id']);
+
+                  Navigator.pop(context);
+                  fetchTrainers();
+                }
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -177,30 +255,13 @@ class _TrainerPageState extends State<TrainerPage> {
     );
   }
 
-  void _deleteTrainer(int index) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Delete Trainer'),
-          content: Text('Are you sure?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  trainers.removeAt(index);
-                });
-                Navigator.pop(context);
-              },
-              child: Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+  // ================= DELETE =================
+  void _deleteTrainer(int index) async {
+    await supabase
+        .from('trainers')
+        .delete()
+        .eq('id', trainers[index]['id']);
+
+    fetchTrainers();
   }
 }

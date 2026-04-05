@@ -164,6 +164,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Text("Admin?"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/adminLogin');
+                      },
+                      child: Text("Login here"),
+                    )
+                  ],
+                ),
+
+                const SizedBox(height: 5),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                     const Text(
                       "Don't have an account? ",
                       style: TextStyle(color: Colors.white),

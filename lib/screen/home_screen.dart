@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:lockinapp/widgets/animated_workout_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:lockinapp/services/db_helper.dart'; // ✅ 新增
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,50 +59,50 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void saveBodyData() {
-    final box = Hive.box('userData');
+  // ✅ BODY DATA（改为 SharedPreferences）
+  void saveBodyData() async {
+    final prefs = await SharedPreferences.getInstance();
 
-    box.put('height', heightController.text);
-    box.put('weight', weightController.text);
-    box.put('bodyFat', bodyFatController.text);
+    await prefs.setString('height', heightController.text);
+    await prefs.setString('weight', weightController.text);
+    await prefs.setString('bodyFat', bodyFatController.text);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Data saved!")),
     );
   }
 
-  void loadBodyData() {
-    final box = Hive.box('userData');
+  void loadBodyData() async {
+    final prefs = await SharedPreferences.getInstance();
 
     if (!mounted) return;
 
     setState(() {
-      heightController.text = box.get('height', defaultValue: "");
-      weightController.text = box.get('weight', defaultValue: "");
-      bodyFatController.text = box.get('bodyFat', defaultValue: "");
+      heightController.text = prefs.getString('height') ?? "";
+      weightController.text = prefs.getString('weight') ?? "";
+      bodyFatController.text = prefs.getString('bodyFat') ?? "";
     });
   }
 
-  void loadStats() {
-    final box = Hive.box('workouts');
+  // ✅ STATS（改为 SQLite）
+  void loadStats() async {
+    final workouts = await DBHelper().getWorkouts();
 
     int totalToday = 0;
     Set<String> workoutDays = {};
 
     final now = DateTime.now();
 
-    for (int i = 0; i < box.length; i++) {
-      final workout = box.getAt(i);
-
-      if (workout == null || workout['date'] == null) continue;
+    for (var workout in workouts) {
+      if (workout['date'] == null) continue;
 
       final date = DateTime.tryParse(workout['date']) ?? DateTime.now();
-      final duration = int.tryParse(workout['duration'] ?? "0") ?? 0;
+      final duration = workout['duration'] ?? 0;
 
       if (date.year == now.year &&
           date.month == now.month &&
           date.day == now.day) {
-        totalToday += duration;
+        totalToday += duration as int;
       }
 
       workoutDays.add("${date.year}-${date.month}-${date.day}");
@@ -132,20 +133,24 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void loadGoal() {
-    final box = Hive.box('userData');
+  // ✅ GOAL（改为 SharedPreferences）
+  void loadGoal() async {
+    final prefs = await SharedPreferences.getInstance();
 
-    dailyGoal = int.tryParse(box.get('dailyGoal', defaultValue: "0")) ?? 0;
+    dailyGoal = prefs.getInt('dailyGoal') ?? 0;
     goalController.text = dailyGoal == 0 ? "" : dailyGoal.toString();
 
     if (!mounted) return;
     setState(() {});
   }
 
-  void saveGoal() {
-    final box = Hive.box('userData');
+  void saveGoal() async {
+    final prefs = await SharedPreferences.getInstance();
 
-    box.put('dailyGoal', goalController.text);
+    await prefs.setInt(
+      'dailyGoal',
+      int.tryParse(goalController.text) ?? 0,
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Goal saved!")),
@@ -201,7 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // BODY DATA
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -634,4 +638,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
+  }

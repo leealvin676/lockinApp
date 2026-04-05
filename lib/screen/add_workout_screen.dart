@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
+import '../services/db_helper.dart';
 
 class AddWorkoutScreen extends StatefulWidget {
   const AddWorkoutScreen({super.key});
@@ -16,9 +16,8 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
   final repsController = TextEditingController();
 
   void saveWorkout(String type) async {
-    // Validation FIRST
+    // 🔍 Validation
 
-    // Cardio & Yoga → need duration
     if ((type == "Cardio" || type == "Yoga") &&
         durationController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -27,7 +26,6 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
       return;
     }
 
-    // Strength → need sets & reps
     if (type == "Strength") {
       if (setsController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -44,7 +42,6 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
       }
     }
 
-    //Notes check
     if (notesController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please enter notes")),
@@ -52,17 +49,24 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
       return;
     }
 
-    // THEN save to Hive
-    final box = Hive.box('workouts');
 
-    await box.add({
+
+    await DBHelper().insertWorkout({
       "type": type,
-      "duration": durationController.text,
-      "sets": setsController.text,
-      "reps": repsController.text,
+      "duration": (type == "Strength")
+          ? null
+          : int.tryParse(durationController.text) ?? 0,
+      "sets": (type == "Strength")
+          ? int.tryParse(setsController.text) ?? 0
+          : null,
+      "reps": (type == "Strength")
+          ? int.tryParse(repsController.text) ?? 0
+          : null,
       "notes": notesController.text,
       "date": DateTime.now().toIso8601String(),
     });
+
+    print("INSERT SUCCESS 🔥"); // debug
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Workout saved!")),
@@ -87,8 +91,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
         child: ListView(
           children: [
             // Cardio & Yoga → Duration
-            if (type == "Cardio" || type == "Yoga")...[
-
+            if (type == "Cardio" || type == "Yoga") ...[
               Row(
                 children: const [
                   Icon(Icons.timelapse, color: Colors.grey, size: 20),
@@ -104,7 +107,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
                 style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, // only numbers
+                  FilteringTextInputFormatter.digitsOnly,
                 ],
                 decoration: const InputDecoration(
                   hintText: "40",
@@ -116,7 +119,6 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
             // Strength → Sets & Reps
             else if (type == "Strength") ...[
               const SizedBox(height: 10),
-
               Row(
                 children: const [
                   Icon(Icons.layers, color: Colors.grey, size: 20),
@@ -127,13 +129,12 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
                   ),
                 ],
               ),
-
               TextField(
                 controller: setsController,
                 style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, //only numbers
+                  FilteringTextInputFormatter.digitsOnly,
                 ],
                 decoration: const InputDecoration(
                   hintText: "Sets",
@@ -141,7 +142,6 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-
               Row(
                 children: const [
                   Icon(Icons.loop, color: Colors.grey, size: 20),
@@ -152,13 +152,12 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
                   ),
                 ],
               ),
-
               TextField(
                 controller: repsController,
                 style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, //only numbers
+                  FilteringTextInputFormatter.digitsOnly,
                 ],
                 decoration: const InputDecoration(
                   hintText: "Reps",
@@ -169,7 +168,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
 
             const SizedBox(height: 10),
 
-            //Notes (for all)
+            // Notes
             Row(
               children: const [
                 Icon(Icons.note_alt_outlined, color: Colors.grey, size: 20),
@@ -180,7 +179,6 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
                 ),
               ],
             ),
-
             TextField(
               controller: notesController,
               style: const TextStyle(color: Colors.white),

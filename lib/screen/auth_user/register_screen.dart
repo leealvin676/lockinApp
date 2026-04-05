@@ -18,30 +18,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void register() async {
     final auth = AuthService();
 
+
     if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Passwords do not match")),
+        const SnackBar(content: Text("Passwords do not match")),
       );
       return;
     }
 
-    bool success = await auth.register(
-      nameController.text,
-      emailController.text,
-      passwordController.text,
+
+    String? error = await auth.register(
+      nameController.text.trim(),
+      emailController.text.trim(),
+      passwordController.text.trim(),
     );
 
-    if (success) {
+    if (error == null) {
+      // ✅ 成功
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('name', nameController.text); //save name
+      await prefs.setString('name', nameController.text);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Account created! Please login")),
+        const SnackBar(content: Text("Account created! Please login")),
       );
+
       Navigator.pop(context);
     } else {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("User already exists")),
+        SnackBar(content: Text(error)),
       );
     }
   }
@@ -56,11 +61,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.grey[900], // grey box
+              color: Colors.grey[900],
               borderRadius: BorderRadius.circular(12),
             ),
             child: ListView(
-              shrinkWrap: true, // important so it fits inside box
+              shrinkWrap: true,
               children: [
 
                 Container(
@@ -104,7 +109,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
 
-
                 TextField(
                   controller: nameController,
                   style: const TextStyle(color: Colors.white),
@@ -126,7 +130,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
-
 
                 TextField(
                   controller: emailController,
@@ -150,7 +153,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
 
-
                 TextField(
                   controller: passwordController,
                   obscureText: true,
@@ -173,7 +175,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
-
 
                 TextField(
                   controller: confirmPasswordController,

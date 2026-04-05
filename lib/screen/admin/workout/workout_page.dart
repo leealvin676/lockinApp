@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class WorkoutPage extends StatefulWidget {
   const WorkoutPage({super.key});
@@ -8,7 +9,24 @@ class WorkoutPage extends StatefulWidget {
 }
 
 class _WorkoutPageState extends State<WorkoutPage> {
-  List<String> workouts = ['cardio', 'yoga', 'strenght'];
+
+  final supabase = Supabase.instance.client;
+
+  List workouts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWorkouts();
+  }
+
+  Future<void> fetchWorkouts() async {
+    final data = await supabase.from('workouts').select();
+
+    setState(() {
+      workouts = data;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +34,11 @@ class _WorkoutPageState extends State<WorkoutPage> {
       backgroundColor: Colors.black,
 
       body: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'WORKOUT TYPE',
               style: TextStyle(
                 color: Colors.white,
@@ -29,50 +47,62 @@ class _WorkoutPageState extends State<WorkoutPage> {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             Expanded(
-              child: ListView.builder(
+              child: workouts.isEmpty
+                  ? const Center(
+                child: Text(
+                  "No workouts yet",
+                  style: TextStyle(color: Colors.white),
+                ),
+              )
+                  : ListView.builder(
                 itemCount: workouts.length,
                 itemBuilder: (context, index) {
+                  final workout = workouts[index];
+
                   return Dismissible(
-                    key: Key(workouts[index]),
+                    key: Key(workout['id'].toString()),
                     direction: DismissDirection.endToStart,
 
-                    onDismissed: (direction) {
-                      setState(() {
-                        workouts.removeAt(index);
-                      });
+                    onDismissed: (direction) async {
+                      await supabase
+                          .from('workouts')
+                          .delete()
+                          .eq('id', workout['id']);
+
+                      fetchWorkouts();
                     },
 
                     background: Container(
                       color: Colors.red,
                       alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 20),
-                      child: Icon(Icons.delete, color: Colors.white),
+                      padding: const EdgeInsets.only(right: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
                     ),
 
                     child: Container(
-                      margin: EdgeInsets.only(bottom: 10),
-                      padding: EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Color(0xFF444444),
+                        color: const Color(0xFF444444),
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.fitness_center, color: Colors.red),
-                          SizedBox(width: 10),
+                          const Icon(Icons.fitness_center, color: Colors.red),
+                          const SizedBox(width: 10),
 
                           Expanded(
                             child: Text(
-                              workouts[index],
-                              style: TextStyle(color: Colors.white),
+                              workout['name'],
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
 
                           IconButton(
-                            icon: Icon(Icons.edit, color: Colors.white),
+                            icon: const Icon(Icons.edit, color: Colors.white),
                             onPressed: () => _editWorkout(index),
                           ),
                         ],
@@ -89,11 +119,12 @@ class _WorkoutPageState extends State<WorkoutPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.red,
         onPressed: _addWorkout,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
 
+  // ================= ADD =================
   void _addWorkout() {
     TextEditingController controller = TextEditingController();
 
@@ -101,26 +132,30 @@ class _WorkoutPageState extends State<WorkoutPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Workout'),
+          title: const Text('Add Workout'),
           content: TextField(
             controller: controller,
-            decoration: InputDecoration(hintText: 'Enter wokout name'),
+            decoration: const InputDecoration(hintText: 'Enter workout name'),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Cancle'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  workouts.add(controller.text);
+              onPressed: () async {
+                if (controller.text.trim().isEmpty) return;
+
+                await supabase.from('workouts').insert({
+                  'name': controller.text.trim(),
                 });
+
                 Navigator.pop(context);
+                fetchWorkouts();
               },
-              child: Text('Add'),
+              child: const Text('Add'),
             ),
           ],
         );
@@ -128,37 +163,41 @@ class _WorkoutPageState extends State<WorkoutPage> {
     );
   }
 
+  // ================= EDIT =================
   void _editWorkout(int index) {
     TextEditingController controller =
-    TextEditingController(text: workouts[index]);
+    TextEditingController(text: workouts[index]['name']);
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Workout'),
+          title: const Text('Edit Workout'),
           content: TextField(controller: controller),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  setState(() {
-                    workouts[index] = controller.text;
-                  });
+              onPressed: () async {
+                if (controller.text.trim().isNotEmpty) {
+                  await supabase
+                      .from('workouts')
+                      .update({'name': controller.text.trim()})
+                      .eq('id', workouts[index]['id']);
+
                   Navigator.pop(context);
+                  fetchWorkouts();
                 }
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
       },
     );
   }
-  }
+}

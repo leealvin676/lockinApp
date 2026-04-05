@@ -1,18 +1,64 @@
 import 'package:flutter/material.dart';
-import 'screen/admin/adminlogin.dart';
 
-void main() {
-  runApp(const MainApp());
+
+import 'package:lockinapp/screen/add_workout_screen.dart';
+import 'package:lockinapp/screen/admin/adminlogin.dart';
+import 'package:lockinapp/screen/auth_user/login_screen.dart';
+import 'package:lockinapp/screen/auth_user/register_screen.dart';
+import 'package:lockinapp/screen/history_screen.dart';
+import 'package:lockinapp/screen/home_screen.dart';
+import 'package:lockinapp/screen/workout_session_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:lockinapp/screen/admin/admin_dashboard.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://jjuwccjrjzvuluejbbfw.supabase.co',
+    anonKey: 'sb_publishable_Hx_2HcYWliXpTlqyywsZ4A_Qhj4s_6d',
+  );
+
+  runApp(const MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: AdminLogin(),
+      title: 'LockIN App',
+      theme: ThemeData.dark(),
+
+
+      initialRoute: '/login',
+
+      routes: {
+        // =====================
+        // USER
+        // =====================
+        '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/addWorkout': (context) => const AddWorkoutScreen(),
+        '/history': (context) => const HistoryScreen(),
+
+        '/workoutSession': (context) {
+          final args =
+          ModalRoute.of(context)!.settings.arguments as String?;
+          return WorkoutSessionScreen(workoutType: args);
+        },
+
+        // =====================
+        // ADMIN 🔥
+        // =====================
+        '/adminLogin': (context) => const AdminLogin(),
+      },
     );
   }
 }
