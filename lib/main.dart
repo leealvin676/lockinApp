@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'screen/admin/adminlogin.dart';
 import 'screen/progress/progress_page.dart';
 
 void main() {
