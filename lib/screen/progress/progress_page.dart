@@ -31,8 +31,41 @@ class _ProgressPageState extends State<ProgressPage> {
     loadProgress();
   }
 
+  int calculateStreak(List<Map<String, dynamic>> data) {
+    if (data.isEmpty) return 0;
+
+
+    final uniqueDates = data
+        .map((w) => DateTime.tryParse(w['date'] ?? ''))
+        .whereType<DateTime>()
+        .map((d) => DateTime(d.year, d.month, d.day))
+        .toSet()
+        .toList();
+
+    uniqueDates.sort((a, b) => b.compareTo(a));
+
+    int streak = 0;
+    DateTime today = DateTime.now();
+
+    for (int i = 0; i < uniqueDates.length; i++) {
+      final expected = DateTime(today.year, today.month, today.day - i);
+
+      if (uniqueDates.any((d) =>
+      d.year == expected.year &&
+          d.month == expected.month &&
+          d.day == expected.day)) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
   Future<void> loadProgress() async {
     final data = await DBHelper().getWorkouts();
+
 
     int minutes = 0;
     int calories = 0;
@@ -40,7 +73,22 @@ class _ProgressPageState extends State<ProgressPage> {
     List<double> tempCalories = List.filled(7, 0);
     List<double> tempMinutes = List.filled(7, 0);
 
-    for (var w in data) {
+    final now = DateTime.now();
+
+    List<Map<String, dynamic>> filtered = data.where((w) {
+      final date = DateTime.tryParse(w['date'] ?? '');
+      if (date == null) return false;
+
+      if (selected == 0) {
+        // Weekly
+        return date.isAfter(now.subtract(const Duration(days: 7)));
+      } else {
+        // Monthly
+        return date.isAfter(DateTime(now.year, now.month - 1, now.day));
+      }
+    }).toList();
+
+    for (var w in filtered) {
       final duration = (w['duration'] as int? ?? 0);
       final date = DateTime.tryParse(w['date'] ?? '');
 
@@ -48,17 +96,34 @@ class _ProgressPageState extends State<ProgressPage> {
       calories += duration * 5;
 
       if (date != null) {
-        int dayIndex = date.weekday - 1; // Mon=0
+        final today = DateTime.now();
+        final difference = today.difference(date).inDays;
 
-        tempMinutes[dayIndex] += duration;
-        tempCalories[dayIndex] += duration * 5;
+        if (selected == 0) {
+
+          if (difference >= 0 && difference < 7) {
+            int index = 6 - difference;
+            tempMinutes[index] += duration;
+            tempCalories[index] += duration * 5;
+          }
+        } else {
+
+          if (difference >= 0 && difference < 30) {
+            int index = (difference ~/ 4); // group into 7 bars
+            if (index > 6) index = 6;
+
+            tempMinutes[index] += duration;
+            tempCalories[index] += duration * 5;
+          }
+        } // Mon=0
+
       }
     }
 
     setState(() {
       totalMinutes = minutes;
       totalCalories = calories;
-      streak = data.length;
+      streak = calculateStreak(data);
 
       weeklyCalories = tempCalories;
       weeklyMinutes = tempMinutes;
@@ -199,12 +264,14 @@ class _ProgressPageState extends State<ProgressPage> {
 
   Widget _toggleBtn(String text, int index) {
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selected = index;
-          });
-        },
+      child: GestureDetector(onTap: () async {
+        setState(() {
+          selected = index;
+          isLoading = true;
+        });
+
+        await loadProgress();
+      },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(

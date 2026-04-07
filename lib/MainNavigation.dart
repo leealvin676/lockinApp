@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lockinapp/screen/profile/profile_page.dart';
 import 'screen/home_screen.dart';
 import 'screen/progress/progress_page.dart';
 
@@ -16,7 +17,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const HomeScreen(),
     const Center(child: Text("Workout", style: TextStyle(color: Colors.white))),
     const ProgressPage(),
-    const Center(child: Text("Profile", style: TextStyle(color: Colors.white))),
+    const ProfilePage(),
   ];
 
   @override
