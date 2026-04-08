@@ -20,7 +20,7 @@ class RecommendationScreen extends StatelessWidget {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
               onPressed: () {},
               child: Text("Update", style: TextStyle(color: Colors.black)),
             )

@@ -1,38 +1,36 @@
 import 'package:flutter/material.dart';
 
-class UserForm extends StatefulWidget {
-  const UserForm({super.key});
+class TrainerProfilePage extends StatefulWidget {
+  const TrainerProfilePage({super.key});
 
   @override
-  State<UserForm> createState() => _UserFormState();
+  State<TrainerProfilePage> createState() => _TrainerProfilePageState();
 }
 
-class _UserFormState extends State<UserForm> {
+class _TrainerProfilePageState extends State<TrainerProfilePage> {
 
   final nameController = TextEditingController();
   final emailController = TextEditingController();
-  final goalController = TextEditingController();
+  final phoneController = TextEditingController();
 
   bool isValidEmail(String email) {
     return RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$').hasMatch(email);
   }
 
-  void saveUser() {
+  void saveProfile() {
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
-        goalController.text.isEmpty) {
+        phoneController.text.isEmpty) {
       show("All fields required");
       return;
     }
 
     if (!isValidEmail(emailController.text)) {
-      show("Email must be ___@gmail.com");
+      show("Invalid Gmail format");
       return;
     }
 
-    show("User saved (local)");
-
-    Navigator.pop(context);
+    show("Profile saved (local)");
   }
 
   void show(String msg) {
@@ -46,7 +44,7 @@ class _UserFormState extends State<UserForm> {
       backgroundColor: Colors.black,
 
       appBar: AppBar(
-        title: const Text("User Form"),
+        title: const Text("Edit Profile"),
         backgroundColor: Colors.black,
       ),
 
@@ -55,18 +53,27 @@ class _UserFormState extends State<UserForm> {
         child: Column(
           children: [
 
+            GestureDetector(
+              onTap: () => show("Upload image clicked"),
+              child: const CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.camera_alt),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
             field("Name", nameController),
             field("Email", emailController),
-            field("Goal", goalController),
+            field("Phone", phoneController),
 
             const SizedBox(height: 20),
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              onPressed: saveUser,
+                  backgroundColor: Colors.blue),
+              onPressed: saveProfile,
               child: const Text("Save"),
             )
           ],

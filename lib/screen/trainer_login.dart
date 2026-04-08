@@ -1,72 +1,95 @@
 import 'package:flutter/material.dart';
 import 'trainer_dashboard.dart';
-import '../theme/colors.dart';
 
 class TrainerLogin extends StatelessWidget {
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  TrainerLogin({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.fitness_center, size: 80, color: AppColors.accent),
+      backgroundColor: Colors.black,
 
-              SizedBox(height: 20),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
 
-              Text("LOCK IN",
-                  style: TextStyle(fontSize: 28, color: Colors.white)),
+            const Icon(Icons.fitness_center,
+                size: 80, color: Colors.blue),
 
-              SizedBox(height: 30),
+            const SizedBox(height: 20),
 
-              TextField(
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: "Username",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(),
-                ),
-              ),
+            const Text("LOCK IN",
+                style: TextStyle(fontSize: 28, color: Colors.white)),
 
-              SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-              TextField(
-                style: TextStyle(color: Colors.white),
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.grey[900],
-                  border: OutlineInputBorder(),
-                ),
-              ),
+            const Text(
+              "Welcome Trainer 👋",
+              style: TextStyle(color: Colors.grey),
+            ),
 
-              SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => TrainerDashboard()),
+            TextField(
+              controller: usernameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: input("Username"),
+            ),
+
+            const SizedBox(height: 10),
+
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: input("Password"),
+            ),
+
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue),
+                onPressed: () {
+                  if (usernameController.text.isEmpty ||
+                      passwordController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Fill all fields")),
                     );
-                  },
-                  child: Text("Login",
-                      style: TextStyle(color: Colors.black)),
-                ),
-              )
-            ],
-          ),
+                    return;
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const TrainerDashboard()),
+                  );
+                },
+                child: const Text("Login",
+                    style: TextStyle(color: Colors.white)),
+              ),
+            )
+          ],
         ),
+      ),
+    );
+  }
+
+  InputDecoration input(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.grey),
+      filled: true,
+      fillColor: Colors.grey[900],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
       ),
     );
   }
