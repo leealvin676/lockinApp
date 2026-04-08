@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '/services/db_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lockinapp/screen/profile/edit_profile.dart';
+import 'package:lockinapp/screen/profile/setgoal_page.dart';
 
 const bgColor = Colors.black;
 const cardColor = Color(0xFF2C2C2C);
@@ -22,6 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String email = "";
   int totalWorkouts = 0;
   int totalCalories = 0;
+  String goal = "";
 
   bool isLoading = true;
 
@@ -40,11 +42,12 @@ class _ProfilePageState extends State<ProfilePage> {
       // OPTIONAL: fetch name from profiles table
       final data = await Supabase.instance.client
           .from('profiles')
-          .select('name')
+          .select('name, goal')
           .eq('id', user.id)
           .maybeSingle();
 
       name = data?['name'] ?? "User";
+      goal = data?['goal'] ?? "Not set";
     }
 
     final stats = await DBHelper().getStats();
@@ -133,10 +136,6 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Your Stats",
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 15),
           Row(
             children: [
               Expanded(
@@ -150,7 +149,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     "$totalCalories", "Calories Burned", Colors.red),
               ),
             ],
-          )
+          ),
+          const SizedBox(height: 10),
+
+          Text(
+            "Goal: $goal",
+            style: const TextStyle(color: textGrey),
+          ),
         ],
       ),
     );
