@@ -1,40 +1,62 @@
 import 'package:flutter/material.dart';
 import 'user_screen.dart';
-import 'workout_screen.dart';
-import 'recommendation_screen.dart';
 import 'trainer_profile.dart';
 
-class TrainerDashboard extends StatefulWidget {
-  @override
-  _TrainerDashboardState createState() => _TrainerDashboardState();
-}
-
-class _TrainerDashboardState extends State<TrainerDashboard> {
-  int index = 0;
-
-  final screens = [
-    UserScreen(),
-    WorkoutScreen(),
-    RecommendationScreen(),
-    TrainerProfile(),
-  ];
+class TrainerDashboard extends StatelessWidget {
+  const TrainerDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: screens[index],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: index,
-        backgroundColor: Colors.black,
-        selectedItemColor: Color(0xFFB6FF3B),
-        unselectedItemColor: Colors.grey,
-        onTap: (i) => setState(() => index = i),
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: "Users"),
-          BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: "Workout"),
-          BottomNavigationBarItem(icon: Icon(Icons.lightbulb), label: "Tips"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
+      backgroundColor: Colors.black,
+
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 🔥 HEADER (like your main app)
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    "Trainer Dashboard",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // 👤 PROFILE (centered like your screenshot but cleaner)
+              const TrainerProfile(),
+
+              const SizedBox(height: 20),
+
+              // 👥 USERS SECTION
+              const Text(
+                "Users",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              const UserScreen(),
+            ],
+          ),
+        ),
       ),
     );
   }
