@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class WorkoutScreen extends StatefulWidget {
-  const WorkoutScreen({super.key});
+  final String userName;
+
+  const WorkoutScreen({super.key, required this.userName});
 
   @override
   State<WorkoutScreen> createState() => _WorkoutScreenState();
@@ -12,37 +14,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   final titleController = TextEditingController();
   final descController = TextEditingController();
 
-  String? selectedUser;
+  // 🔥 USER-SPECIFIC DATABASE
+  Map<String, List<Map<String, String>>> userPlans = {
+    "John Doe": [
+      {"title": "Cardio Plan", "desc": "30 mins running"},
+    ],
+  };
 
-  // 🔥 SIMULATED DATABASE
-  List<Map<String, String>> plans = [
-    {
-      "title": "Cardio Plan",
-      "desc": "30 mins running",
-      "user": "John Doe"
-    },
-    {
-      "title": "Strength Plan",
-      "desc": "Upper body workout",
-      "user": "Sarah Lee"
-    }
-  ];
+  List<Map<String, String>> get plans =>
+      userPlans[widget.userName] ?? [];
 
-  final users = ["John Doe", "Sarah Lee"];
-
+  // =========================
+  // CREATE PLAN
+  // =========================
   void createPlan() {
-    if (titleController.text.isEmpty ||
-        descController.text.isEmpty ||
-        selectedUser == null) {
+    if (titleController.text.isEmpty || descController.text.isEmpty) {
       show("Fill all fields");
       return;
     }
 
     setState(() {
-      plans.add({
+      userPlans.putIfAbsent(widget.userName, () => []);
+      userPlans[widget.userName]!.add({
         "title": titleController.text,
         "desc": descController.text,
-        "user": selectedUser!,
       });
     });
 
@@ -52,9 +47,88 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     show("Plan created");
   }
 
-  void retrievePlans() {
-    show("Plans retrieved (local DB simulation)");
-    setState(() {}); // refresh UI
+  // =========================
+  // DELETE PLAN (FIXED)
+  // =========================
+  void deletePlan(int index) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Plan"),
+        content: Text("Delete this plan?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                userPlans[widget.userName]!.removeAt(index);
+              });
+              Navigator.pop(context);
+              show("Plan deleted");
+            },
+            child: const Text("Delete",
+                style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================
+  // EDIT PLAN (FIXED)
+  // =========================
+  void editPlan(int index) {
+    final editTitle = TextEditingController(
+        text: plans[index]["title"]);
+    final editDesc = TextEditingController(
+        text: plans[index]["desc"]);
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Edit Plan"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: editTitle,
+              decoration: const InputDecoration(labelText: "Title"),
+            ),
+            TextField(
+              controller: editDesc,
+              decoration: const InputDecoration(labelText: "Description"),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              if (editTitle.text.isEmpty || editDesc.text.isEmpty) {
+                show("Fill all fields");
+                return;
+              }
+
+              setState(() {
+                userPlans[widget.userName]![index] = {
+                  "title": editTitle.text,
+                  "desc": editDesc.text,
+                };
+              });
+
+              Navigator.pop(context);
+              show("Plan updated");
+            },
+            child: const Text("Save",
+                style: TextStyle(color: Colors.blue)),
+          ),
+        ],
+      ),
+    );
   }
 
   void show(String msg) {
@@ -68,14 +142,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       backgroundColor: Colors.black,
 
       appBar: AppBar(
-        title: const Text("Workout Plans"),
+        title: Text("${widget.userName} Plans"),
         backgroundColor: Colors.black,
-      ),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blue,
-        onPressed: retrievePlans,
-        child: const Icon(Icons.refresh),
       ),
 
       body: SingleChildScrollView(
@@ -97,17 +165,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               decoration: input("Description"),
             ),
 
-            const SizedBox(height: 10),
-
-            DropdownButtonFormField(
-              dropdownColor: Colors.black,
-              hint: const Text("Assign User"),
-              items: users.map((u) {
-                return DropdownMenuItem(value: u, child: Text(u));
-              }).toList(),
-              onChanged: (val) => selectedUser = val,
-            ),
-
             const SizedBox(height: 20),
 
             ElevatedButton(
@@ -119,34 +176,50 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
             const SizedBox(height: 30),
 
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
-              child: Text("Plan History",
-                  style: TextStyle(color: Colors.white)),
+              child: Text(
+                "${widget.userName} Plan History",
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
 
             const SizedBox(height: 10),
 
-            ...plans.map((p) => Card(
-              color: Colors.grey[900],
-              child: ListTile(
-                title: Text(p["title"]!,
-                    style: const TextStyle(color: Colors.white)),
-                subtitle: Text(
-                  "${p["desc"]}\nUser: ${p["user"]}",
-                  style: const TextStyle(color: Colors.grey),
+            if (plans.isEmpty)
+              const Text("No plans yet",
+                  style: TextStyle(color: Colors.grey)),
+
+            ...plans.asMap().entries.map((entry) {
+              int index = entry.key;
+              var p = entry.value;
+
+              return Card(
+                color: Colors.grey[900],
+                child: ListTile(
+                  title: Text(p["title"]!,
+                      style: const TextStyle(color: Colors.white)),
+                  subtitle: Text(p["desc"]!,
+                      style: const TextStyle(color: Colors.grey)),
+
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon:
+                        const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => editPlan(index),
+                      ),
+                      IconButton(
+                        icon:
+                        const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => deletePlan(index),
+                      ),
+                    ],
+                  ),
                 ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    setState(() {
-                      plans.remove(p);
-                    });
-                    show("Plan deleted");
-                  },
-                ),
-              ),
-            ))
+              );
+            })
           ],
         ),
       ),
