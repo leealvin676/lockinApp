@@ -10,12 +10,11 @@ import 'package:lockinapp/screen/home/history_screen.dart';
 import 'package:lockinapp/screen/home/home_screen.dart';
 import 'package:lockinapp/screen/home/workout_session_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lockinapp/screen/trainer_screen/trainer_login.dart';
 
 import 'package:lockinapp/screen/admin/admin_dashboard.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
@@ -59,6 +58,7 @@ class MyApp extends StatelessWidget {
         // ADMIN
         // =====================
         '/adminLogin': (context) => const AdminLogin(),
+        '/trainerLogin': (context) => TrainerLogin()
       },
     );
   }

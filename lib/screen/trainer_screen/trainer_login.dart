@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'trainer_dashboard.dart';
 
-class TrainerLogin extends StatelessWidget {
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+class TrainerLogin extends StatefulWidget {
 
   TrainerLogin({super.key});
+
+  @override
+  State<TrainerLogin> createState() => _TrainerLoginState();
+}
+
+class _TrainerLoginState extends State<TrainerLogin> {
+  final usernameController = TextEditingController();
+
+  final passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {

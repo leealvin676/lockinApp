@@ -174,6 +174,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
 
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Trainer?"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/trainerLogin');
+                      },
+                      child: Text("Login here"),
+                    )
+                  ],
+                ),
+
                 const SizedBox(height: 5),
 
                 Row(
