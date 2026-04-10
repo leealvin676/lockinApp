@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screen/trainer_login.dart';
+import 'screen/trainer_screen/trainer_login.dart';
 import 'theme/colors.dart';
 
 void main() {
