@@ -119,6 +119,19 @@ class _TrainerLoginState extends State<TrainerLogin> {
 
                 const SizedBox(height: 20),
 
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Not a Trainer?"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      child: const Text("Go back here"),
+                    ),
+                  ],
+                ),
+
                 // LOGIN BUTTON
                 SizedBox(
                   width: double.infinity,

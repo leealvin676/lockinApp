@@ -20,6 +20,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   String selectedGoal = "";
   List workoutTypes = [];
 
+  List trainers = [];
+  String? selectedTrainerId;
+
   List<Map<String, dynamic>> workouts = [];
 
   // 🔥 NEW: MULTIPLE BOOKINGS
@@ -31,6 +34,20 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     loadWorkouts();
     loadWorkoutTypes();
     loadBookings(); // 🔥 NEW
+  }
+
+  Future<void> loadTrainers() async {
+    if (selectedGoal.isEmpty) return;
+
+    final data = await Supabase.instance.client
+        .from('trainers')
+        .select()
+        .eq('type', selectedGoal.toLowerCase());
+
+    setState(() {
+      trainers = data;
+      selectedTrainerId = null; // reset selection
+    });
   }
 
   // =========================
@@ -98,25 +115,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
 
-      if (user == null) {
-        show("User not logged in");
-        return;
-      }
+      if (user == null) return;
 
-      if (selectedGoal.isEmpty) {
-        show("Please select workout type");
-        return;
-      }
-
-      final trainer = await Supabase.instance.client
-          .from('trainers')
-          .select()
-          .eq('type', selectedGoal.toLowerCase())
-          .limit(1)
-          .maybeSingle();
-
-      if (trainer == null) {
-        show("No trainer available");
+      if (selectedTrainerId == null) {
+        show("Please select a trainer");
         return;
       }
 
@@ -124,11 +126,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         'user_id': user.id.toString(),
         'user_name': user.email,
         'goal': selectedGoal.toLowerCase(),
-        'trainer_id': trainer['id'],
+        'trainer_id': selectedTrainerId, // 🔥 selected trainer
         'status': 'pending',
       });
 
-      await loadBookings(); // 🔥 refresh
+      await loadBookings();
 
       show("Booking sent!");
     } catch (e) {
@@ -227,7 +229,59 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               setState(() {
                 selectedGoal = value!;
               });
+              loadTrainers(); // 🔥 IMPORTANT
             },
+          ),
+
+          const SizedBox(height: 10),
+
+// 🔥 TRAINER LIST
+          trainers.isEmpty
+              ? const Text(
+            "No trainers available",
+            style: TextStyle(color: Colors.grey),
+          )
+              : Column(
+            children: trainers.map((t) {
+              final isSelected = selectedTrainerId == t['id'];
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedTrainerId = t['id'];
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFF3A3A3A)
+                        : const Color(0xFF2C2C2C),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFD4E157)
+                          : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person, color: Colors.white),
+                      const SizedBox(width: 10),
+                      Text(
+                        t['name'],
+                        style: TextStyle(
+                          color: isSelected
+                              ? const Color(0xFFD4E157)
+                              : Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
 
           const SizedBox(height: 15),
