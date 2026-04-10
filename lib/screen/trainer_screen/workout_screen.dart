@@ -16,19 +16,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   final titleController = TextEditingController();
   final typeController = TextEditingController();
+
   String selectedGoal = "";
   List workoutTypes = [];
 
   List<Map<String, dynamic>> workouts = [];
 
-  String bookingStatus = ""; // 🔥 booking state
+  // 🔥 NEW: MULTIPLE BOOKINGS
+  List<Map<String, dynamic>> userBookings = [];
 
   @override
   void initState() {
     super.initState();
     loadWorkouts();
-    loadBookingStatus();
-    loadWorkoutTypes();// 🔥 important
+    loadWorkoutTypes();
+    loadBookings(); // 🔥 NEW
   }
 
   // =========================
@@ -42,6 +44,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
+  // =========================
+  // LOAD WORKOUT TYPES (Supabase)
+  // =========================
   Future<void> loadWorkoutTypes() async {
     final data = await Supabase.instance.client
         .from('workouts')
@@ -49,6 +54,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
     setState(() {
       workoutTypes = data;
+
       if (workoutTypes.isNotEmpty) {
         selectedGoal = workoutTypes[0]['name'];
       }
@@ -56,9 +62,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   // =========================
-  // LOAD BOOKING STATUS (Supabase)
+  // LOAD USER BOOKINGS
   // =========================
-  Future<void> loadBookingStatus() async {
+  Future<void> loadBookings() async {
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user == null) return;
@@ -66,35 +72,69 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final data = await Supabase.instance.client
         .from('bookings')
         .select()
-        .eq('user_id', user.id)
-        .order('created_at', ascending: false)
-        .limit(1)
-        .maybeSingle();
+        .eq('user_id', user.id);
 
-    if (data != null) {
-      setState(() {
-        bookingStatus = data['status'];
-      });
-    }
+    setState(() {
+      userBookings = List<Map<String, dynamic>>.from(data);
+    });
+  }
+
+  // =========================
+  // GET STATUS BY TYPE
+  // =========================
+  String? getBookingStatus(String goal) {
+    final booking = userBookings.firstWhere(
+          (b) => b['goal'] == goal,
+      orElse: () => {},
+    );
+
+    return booking.isEmpty ? null : booking['status'];
   }
 
   // =========================
   // BOOK TRAINER
   // =========================
   Future<void> bookTrainer() async {
-    final user = Supabase.instance.client.auth.currentUser;
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
 
-    if (user == null) return;
+      if (user == null) {
+        show("User not logged in");
+        return;
+      }
 
-    await Supabase.instance.client.from('bookings').insert({
-      'user_id': user.id,
-      'user_name': user.email,
-      'goal': "Fitness",
-      'status': 'pending',
-    });
+      if (selectedGoal.isEmpty) {
+        show("Please select workout type");
+        return;
+      }
 
-    await loadBookingStatus(); // 🔥 refresh UI
-    show("Booking sent!");
+      final trainer = await Supabase.instance.client
+          .from('trainers')
+          .select()
+          .eq('type', selectedGoal.toLowerCase())
+          .limit(1)
+          .maybeSingle();
+
+      if (trainer == null) {
+        show("No trainer available");
+        return;
+      }
+
+      await Supabase.instance.client.from('bookings').insert({
+        'user_id': user.id.toString(),
+        'user_name': user.email,
+        'goal': selectedGoal.toLowerCase(),
+        'trainer_id': trainer['id'],
+        'status': 'pending',
+      });
+
+      await loadBookings(); // 🔥 refresh
+
+      show("Booking sent!");
+    } catch (e) {
+      print("ERROR: $e");
+      show("Error booking trainer");
+    }
   }
 
   // =========================
@@ -138,70 +178,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   // =========================
-  // ADD WORKOUT MODAL
-  // =========================
-  void openAddDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E1E1E),
-            borderRadius:
-            BorderRadius.vertical(top: Radius.circular(25)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Add New Workout",
-                  style:
-                  TextStyle(color: Colors.white, fontSize: 18)),
-
-              const SizedBox(height: 15),
-
-              TextField(
-                controller: titleController,
-                style: const TextStyle(color: Colors.white),
-                decoration: input("Workout Name"),
-              ),
-
-              const SizedBox(height: 10),
-
-              TextField(
-                controller: typeController,
-                style: const TextStyle(color: Colors.white),
-                decoration: input("Type (Cardio / Strength)"),
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD4E157),
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: () async {
-                    await createWorkout();
-                    if (!mounted) return;
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Add Workout"),
-                ),
-              )
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // =========================
-  // BOOKING CARD (NEW UI)
+  // BOOKING CARD
   // =========================
   Widget bookingCard() {
     return Container(
@@ -226,7 +203,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
           const SizedBox(height: 8),
 
-
           const Text(
             "Get a professional trainer to guide your workouts",
             style: TextStyle(color: Colors.grey),
@@ -234,7 +210,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
           const SizedBox(height: 10),
 
-          // 🔥 DROPDOWN HERE
           DropdownButton<String>(
             value: selectedGoal.isEmpty ? null : selectedGoal,
             isExpanded: true,
@@ -267,15 +242,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   // BOOKING BUTTON LOGIC
   // =========================
   Widget bookingButton() {
-    if (bookingStatus == "pending") {
+    final status = getBookingStatus(selectedGoal);
+
+    if (status == "pending") {
       return statusBox("⏳ Pending Approval", Colors.orange);
     }
 
-    if (bookingStatus == "accepted") {
+    if (status == "accepted") {
       return statusBox("✅ Trainer Accepted", Colors.green);
     }
 
-    if (bookingStatus == "declined") {
+    if (status == "declined") {
       return statusBox("❌ Declined", Colors.red);
     }
 
@@ -331,12 +308,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         child: Column(
           children: [
 
-            // SUMMARY
             Row(
               children: [
                 Expanded(
-                  child: summaryBox(
-                      "${workouts.length}", "Total Workouts"),
+                  child: summaryBox("${workouts.length}", "Total Workouts"),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -354,12 +329,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
             const SizedBox(height: 20),
 
-            // 🔥 NEW BOOKING CARD
             bookingCard(),
 
             const SizedBox(height: 20),
 
-            // WORKOUT LIST
             Expanded(
               child: workouts.isEmpty
                   ? const Center(
@@ -434,6 +407,69 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // =========================
+  // ADD WORKOUT DIALOG
+  // =========================
+  void openAddDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E1E1E),
+            borderRadius:
+            BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Add New Workout",
+                  style:
+                  TextStyle(color: Colors.white, fontSize: 18)),
+
+              const SizedBox(height: 15),
+
+              TextField(
+                controller: titleController,
+                style: const TextStyle(color: Colors.white),
+                decoration: input("Workout Name"),
+              ),
+
+              const SizedBox(height: 10),
+
+              TextField(
+                controller: typeController,
+                style: const TextStyle(color: Colors.white),
+                decoration: input("Type (Cardio / Strength)"),
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD4E157),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () async {
+                    await createWorkout();
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Add Workout"),
+                ),
+              )
+            ],
+          ),
+        );
+      },
     );
   }
 

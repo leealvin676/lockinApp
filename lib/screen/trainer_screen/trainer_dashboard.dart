@@ -3,6 +3,7 @@ import 'workout_screen.dart';
 import 'recommendation_screen.dart';
 import 'trainer_profile_page.dart';
 import 'user_form.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TrainerDashboard extends StatefulWidget {
   const TrainerDashboard({super.key});
@@ -13,17 +14,84 @@ class TrainerDashboard extends StatefulWidget {
 
 class _TrainerDashboardState extends State<TrainerDashboard> {
 
-  List<Map<String, dynamic>> users = [
-    {"name": "John Doe", "goal": "Weight Loss", "progress": 55, "active": true},
-    {"name": "Sarah Lee", "goal": "Muscle Gain", "progress": 12, "active": false},
-  ];
+  List<Map<String, dynamic>> users = [];
 
-  List<Map<String, String>> bookings = [
-    {"name": "Liam Carter", "goal": "Weight Loss"},
-    {"name": "Sophia Dubois", "goal": "Muscle Gain"},
-  ];
+  List<Map<String, dynamic>> bookings = [];
+  final supabase = Supabase.instance.client;
 
+  String trainerId = ""; // 🔥 will store trainer id
   String searchQuery = "";
+
+  @override
+  void initState() {
+    super.initState();
+    loadBookings();
+  }
+
+  // =========================
+  // LOAD BOOKINGS
+  // =========================
+  Future<void> loadBookings() async {
+
+    // 🔥 TEMP: get first trainer (for testing)
+    final trainer = await supabase
+        .from('trainers')
+        .select()
+        .limit(1)
+        .maybeSingle();
+
+    if (trainer == null) return;
+
+    trainerId = trainer['id'];
+
+    final data = await supabase
+        .from('bookings')
+        .select()
+        .eq('trainer_id', trainerId)
+        .eq('status', 'pending');
+
+    setState(() {
+      bookings = List<Map<String, dynamic>>.from(data);
+    });
+  }
+
+  // =========================
+  // ACCEPT BOOKING
+  // =========================
+  Future<void> acceptBooking(Map booking) async {
+    await supabase
+        .from('bookings')
+        .update({'status': 'accepted'})
+        .eq('id', booking['id']);
+
+    // 🔥 move to users list
+    setState(() {
+      users.add({
+        "name": booking["user_name"],
+        "goal": booking["goal"],
+        "progress": 0,
+        "active": true,
+      });
+    });
+
+    await loadBookings();
+
+    show("User accepted");
+  }
+
+  // =========================
+  // DECLINE BOOKING
+  // =========================
+  Future<void> declineBooking(Map booking) async {
+    await supabase
+        .from('bookings')
+        .update({'status': 'declined'})
+        .eq('id', booking['id']);
+
+    await loadBookings();
+
+    show("Booking declined");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +128,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                     child: Icon(Icons.person, color: Colors.black),
                   ),
                   SizedBox(width: 5),
-                  Text("Alex Trainer"),
+                  Text("Trainer"),
                 ],
               ),
             ),
@@ -79,7 +147,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
         child: const Icon(Icons.add),
       ),
 
-      // 🔥 FIXED SCROLL UI
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -94,7 +161,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
               const SizedBox(height: 15),
 
-              // 🔍 SEARCH
+              // SEARCH
               TextField(
                 onChanged: (val) => setState(() => searchQuery = val),
                 style: const TextStyle(color: Colors.white),
@@ -113,7 +180,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               const SizedBox(height: 20),
 
               // =========================
-              // 🔥 PENDING BOOKINGS
+              // BOOKINGS
               // =========================
               const Text("Pending Bookings",
                   style: TextStyle(color: Colors.white, fontSize: 18)),
@@ -145,7 +212,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               const SizedBox(height: 20),
 
               // =========================
-              // 👥 USERS
+              // USERS
               // =========================
               const Text("Users",
                   style: TextStyle(color: Colors.white, fontSize: 18)),
@@ -173,7 +240,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   }
 
   // =========================
-  // 🔥 BOOKING CARD
+  // BOOKING CARD
   // =========================
   Widget bookingCard(Map booking) {
     return Container(
@@ -195,9 +262,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(booking["name"]!,
+                  Text(booking["user_name"] ?? "",
                       style: const TextStyle(color: Colors.white)),
-                  Text(booking["goal"]!,
+                  Text(booking["goal"] ?? "",
                       style: const TextStyle(color: Colors.grey)),
                 ],
               ),
@@ -211,7 +278,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue),
+                      backgroundColor: Colors.green),
                   onPressed: () => acceptBooking(booking),
                   child: const Text("Accept"),
                 ),
@@ -230,36 +297,20 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  void acceptBooking(Map booking) {
-    setState(() {
-      bookings.remove(booking);
-      users.add({
-        "name": booking["name"],
-        "goal": booking["goal"],
-        "progress": 0,
-        "active": true,
-      });
-    });
-    show("User accepted");
-  }
-
   void confirmDecline(Map booking) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Decline Booking"),
-        content: Text("Decline ${booking["name"]}?"),
+        content: Text("Decline ${booking["user_name"]}?"),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel")),
           TextButton(
-            onPressed: () {
-              setState(() {
-                bookings.remove(booking);
-              });
+            onPressed: () async {
+              await declineBooking(booking);
               Navigator.pop(context);
-              show("Booking declined");
             },
             child:
             const Text("Decline", style: TextStyle(color: Colors.red)),
@@ -270,7 +321,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   }
 
   // =========================
-  // 👥 USER CARD
+  // USER CARD
   // =========================
   Widget userCard(Map user) {
     return Container(
@@ -334,7 +385,8 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const RecommendationScreen(), // ✅ const added
+                        builder: (_) =>
+                        const RecommendationScreen(),
                       ),
                     );
                   },
@@ -357,7 +409,6 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // 🔴 DELETE WITH REASON
   void deleteWithReason(Map user) {
     final reasonController = TextEditingController();
 
