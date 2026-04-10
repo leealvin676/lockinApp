@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/db_helper.dart';
+import '../../services/db_helper.dart';
 
 class WorkoutSessionScreen extends StatefulWidget {
   final String? workoutType;

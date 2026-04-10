@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:lockinapp/MainNavigation.dart';
 
 
-import 'package:lockinapp/screen/add_workout_screen.dart';
+import 'package:lockinapp/screen/home/add_workout_screen.dart';
 import 'package:lockinapp/screen/admin/adminlogin.dart';
-import 'package:lockinapp/screen/auth_user/login_screen.dart';
-import 'package:lockinapp/screen/auth_user/register_screen.dart';
-import 'package:lockinapp/screen/history_screen.dart';
-import 'package:lockinapp/screen/home_screen.dart';
-import 'package:lockinapp/screen/workout_session_screen.dart';
+import 'package:lockinapp/screen/home/auth_user/login_screen.dart';
+import 'package:lockinapp/screen/home/auth_user/register_screen.dart';
+import 'package:lockinapp/screen/home/history_screen.dart';
+import 'package:lockinapp/screen/home/home_screen.dart';
+import 'package:lockinapp/screen/home/workout_session_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:lockinapp/screen/admin/admin_dashboard.dart';
@@ -39,9 +39,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/login', // ✅ 保留这个
 
       routes: {
-        // =====================
-        // USER
-        // =====================
+
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
 

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lockinapp/screen/profile/profile_page.dart';
-import 'screen/home_screen.dart';
+import 'screen/home/home_screen.dart';
 import 'screen/progress/progress_page.dart';
+import 'screen/trainer_screen/workout_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -15,7 +16,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final pages = [
     const HomeScreen(),
-    const Center(child: Text("Workout", style: TextStyle(color: Colors.white))),
+    const WorkoutScreen(userName: '',),
     const ProgressPage(),
     const ProfilePage(),
   ];
