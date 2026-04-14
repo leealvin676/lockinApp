@@ -54,7 +54,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _showEditDialog(BuildContext context, Map workout) {
-    String selectedType = workout['type'];
+    String selectedType = workout['type'] ?? "Cardio";
+
+// ensure valid value
+    if (!["Cardio", "Strength", "Yoga"].contains(selectedType)) {
+      selectedType = "Cardio";
+    }
 
     TextEditingController durationController =
     TextEditingController(text: workout['duration']?.toString() ?? "");

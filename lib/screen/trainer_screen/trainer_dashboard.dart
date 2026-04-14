@@ -26,7 +26,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   @override
   void initState() {
     super.initState();
-    loadBookings();
+    loadBookings().then((_) => loadUsers());
   }
 
   // =========================
@@ -58,11 +58,30 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     final data = await supabase
         .from('bookings')
         .select()
-        .eq('trainer_id', trainerId)
-        .eq('status', 'pending');
+        .eq('trainer_id', trainerId);
+
 
     setState(() {
       bookings = List<Map<String, dynamic>>.from(data);
+    });
+  }
+
+  Future<void> loadUsers() async {
+    final data = await supabase
+        .from('bookings')
+        .select()
+        .eq('trainer_id', trainerId)
+        .eq('status', 'accepted');
+
+    setState(() {
+      users = data.map<Map<String, dynamic>>((b) {
+        return {
+          "name": b["user_name"],
+          "goal": b["goal"],
+          "progress": 0,
+          "active": true,
+        };
+      }).toList();
     });
   }
 
@@ -86,6 +105,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     });
 
     await loadBookings();
+    await loadUsers(); // ✅ ADD THIS
 
     show("User accepted");
   }
@@ -110,6 +130,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     final filteredUsers = users.where((u) {
       return u["name"].toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
+
+    final pendingBookings =
+    bookings.where((b) => b['status'] == 'pending').toList();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -198,7 +221,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
               const SizedBox(height: 10),
 
-              bookings.isEmpty
+              pendingBookings.isEmpty
                   ? Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -214,9 +237,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                   : ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: bookings.length,
+                itemCount: pendingBookings.length,
                 itemBuilder: (context, index) {
-                  return bookingCard(bookings[index]);
+                  return bookingCard(pendingBookings[index]);
                 },
               ),
 
@@ -475,9 +498,9 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
               onPressed: () => Navigator.pop(context),
               child: const Text("Cancel")),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+            onPressed: () async {
+              await Supabase.instance.client.auth.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
             },
             child:
             const Text("Logout", style: TextStyle(color: Colors.red)),

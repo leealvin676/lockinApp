@@ -90,7 +90,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ✅ BODY DATA（改为 SharedPreferences）
   void saveBodyData() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -164,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ✅ GOAL（改为 SharedPreferences）
+
   void loadGoal() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -324,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // DAILY SUMMARY
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -364,7 +363,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
 
               const SizedBox(height: 20),
-              //TODAY'S GOAL
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -410,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 12),
 
-                    // Progress Bar
+
                     dailyGoal > 0
                         ? Column(
                       children: [
@@ -479,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // WORKOUT TYPES
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

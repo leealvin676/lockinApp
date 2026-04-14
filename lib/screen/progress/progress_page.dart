@@ -20,6 +20,8 @@ class _ProgressPageState extends State<ProgressPage> {
   List<double> weeklyCalories = List.filled(7, 0);
   List<double> weeklyMinutes = List.filled(7, 0);
 
+  int dailyGoal = 30;
+  int totalWorkouts = 0;
   int totalMinutes = 0;
   int totalCalories = 0;
   int streak = 0;
@@ -63,9 +65,17 @@ class _ProgressPageState extends State<ProgressPage> {
     return streak;
   }
 
+
+  String getMotivation() {
+    if (streak >= 7) return "🔥 On fire! Keep it up!";
+    if (streak >= 3) return "💪 Good consistency!";
+    if (streak >= 1) return "👍 Nice start!";
+    return "🚀 Let's begin today!";
+  }
+
   Future<void> loadProgress() async {
     final data = await DBHelper().getWorkouts();
-
+    totalWorkouts = data.length;
 
     int minutes = 0;
     int calories = 0;
@@ -80,10 +90,10 @@ class _ProgressPageState extends State<ProgressPage> {
       if (date == null) return false;
 
       if (selected == 0) {
-        // Weekly
+
         return date.isAfter(now.subtract(const Duration(days: 7)));
       } else {
-        // Monthly
+
         return date.isAfter(DateTime(now.year, now.month - 1, now.day));
       }
     }).toList();
@@ -115,7 +125,7 @@ class _ProgressPageState extends State<ProgressPage> {
             tempMinutes[index] += duration;
             tempCalories[index] += duration * 5;
           }
-        } // Mon=0
+        }
 
       }
     }
@@ -151,6 +161,14 @@ class _ProgressPageState extends State<ProgressPage> {
     });
   }
 
+  String bmiStatus() {
+    if (bmi == 0) return "";
+    if (bmi < 18.5) return "Underweight";
+    if (bmi < 25) return "Normal";
+    if (bmi < 30) return "Overweight";
+    return "Obese";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,6 +196,12 @@ class _ProgressPageState extends State<ProgressPage> {
               _summary(),
               const SizedBox(height: 20),
 
+              _goalCard(),
+
+              const SizedBox(height: 20),
+
+
+
               _toggle(),
               const SizedBox(height: 20),
 
@@ -199,13 +223,64 @@ class _ProgressPageState extends State<ProgressPage> {
   }
 
   Widget _summary() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
       children: [
-        _card(Icons.local_fire_department, "$totalCalories", "Week\nCalories", Colors.orange),
-        _card(Icons.timer, "$totalMinutes", "Week\nMinutes", Colors.blue),
-        _card(Icons.bolt, "$streak", "Day\nStreak", Colors.purple),
+
+        Row(
+          children: [
+            Expanded(child: _card(Icons.local_fire_department, "$totalCalories", "Week\nCalories", Colors.orange)),
+            const SizedBox(width: 10),
+            Expanded(child: _card(Icons.timer, "$totalMinutes", "Week\nMinutes", Colors.blue)),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        Row(
+          children: [
+            Expanded(child: _card(Icons.bolt, "$streak", "Day\nStreak", Colors.purple)),
+            const SizedBox(width: 10),
+            Expanded(child: _card(Icons.fitness_center, "$totalWorkouts", "Total\nWorkouts", Colors.green)),
+          ],
+        ),
+
       ],
+    );
+  }
+
+  Widget _goalCard() {
+    double progress = totalMinutes / dailyGoal;
+    if (progress > 1) progress = 1;
+
+    return _cardContainer(
+      title: "Daily Goal",
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Text(
+            "$totalMinutes / $dailyGoal min",
+            style: const TextStyle(color: Colors.white),
+          ),
+
+          const SizedBox(height: 10),
+
+          LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.grey,
+            color: Colors.blue,
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            progress == 1
+                ? "🔥 Goal completed!"
+                : "Keep going 💪",
+            style: const TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 
@@ -376,7 +451,7 @@ class _ProgressPageState extends State<ProgressPage> {
           ),
           const SizedBox(height: 10),
           Text(
-            "BMI: ${bmi.toStringAsFixed(2)}",
+            "BMI: ${bmi.toStringAsFixed(2)} (${bmiStatus()})",
             style: const TextStyle(color: Colors.white),
           ),
         ],
@@ -430,9 +505,9 @@ class _ProgressPageState extends State<ProgressPage> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold),
           ),
-          const Text(
-            "You're building a habit!",
-            style: TextStyle(color: textGrey),
+          Text(
+            getMotivation(),
+            style: const TextStyle(color: textGrey),
           ),
         ],
       ),

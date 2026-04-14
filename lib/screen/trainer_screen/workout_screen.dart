@@ -25,6 +25,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   List trainers = [];
   String? selectedTrainerId;
+  String? selectedTrainerName;
 
   List<Map<String, dynamic>> workouts = [];
 
@@ -147,10 +148,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       }
 
       await Supabase.instance.client.from('bookings').insert({
-        'user_id': user.id.toString(),
+        'user_id': user.id,
         'user_name': user.email,
         'goal': selectedGoal.toLowerCase(),
-        'trainer_id': selectedTrainerId, // 🔥 selected trainer
+        'trainer_id': selectedTrainerId,
+        'trainer_name': selectedTrainerName, // ✅ ADD THIS
         'status': 'pending',
       });
 
@@ -270,11 +272,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               final isSelected = selectedTrainerId == t['id'];
 
               return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedTrainerId = t['id'];
-                  });
-                },
+                  onTap: () {
+                    setState(() {
+                      selectedTrainerId = t['id'];
+                      selectedTrainerName = t['name']; // ✅ ADD THIS
+                    });
+                  },
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),

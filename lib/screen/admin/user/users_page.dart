@@ -19,13 +19,13 @@ class _UserPageState extends State<UserPage> {
   void initState() {
     super.initState();
 
-    // ✅ 正确：等 UI build 完才 fetch
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchUsers();
     });
   }
 
-  // ================= FETCH USERS =================
+
   Future<void> fetchUsers() async {
     try {
       final data = await supabase.from('profiles').select();
@@ -52,7 +52,7 @@ class _UserPageState extends State<UserPage> {
     }
   }
 
-  // ================= DELETE =================
+
   Future<void> _deleteUser(int index) async {
     final id = users[index]['id'];
 

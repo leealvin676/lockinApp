@@ -3,6 +3,7 @@ import 'package:lockinapp/screen/admin/workout/workout_page.dart';
 import 'package:lockinapp/screen/admin/trainer/trainer_page.dart';
 import 'package:lockinapp/screen/admin/user/users_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lockinapp/screen/admin/trainer/booking_page.dart';
 
 class AdminDashBoard extends StatefulWidget {
   const AdminDashBoard({super.key});
@@ -28,15 +29,16 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
     );
   }
 
-  // 🔥 用 get（避免卡住）
+
   List<Widget> get _pages => [
     _mainBody(),
     WorkoutPage(),
     TrainerPage(),
     UserPage(),
+    AdminBookingPage(),
   ];
 
-  // ================= APP BAR =================
+
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: const Color(0xFF333333),
@@ -58,14 +60,17 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
       ),
       actions: [
         IconButton(
-          onPressed: () {},
           icon: const Icon(Icons.logout, color: Colors.red),
-        ),
+          onPressed: () async {
+            await Supabase.instance.client.auth.signOut();
+            Navigator.pushReplacementNamed(context, '/login');
+          },
+        )
       ],
     );
   }
 
-  // ================= MAIN DASHBOARD =================
+
   Widget _mainBody() {
     return FutureBuilder(
       future: Future.wait([
@@ -108,7 +113,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
                   style: TextStyle(color: Colors.grey)),
               const SizedBox(height: 30),
 
-              // ================= USERS =================
+
               Container(
                 height: 150,
                 width: 350,
@@ -145,7 +150,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
 
               const SizedBox(height: 30),
 
-              // ================= WORKOUT =================
+
               Container(
                 height: 150,
                 width: 350,
@@ -182,7 +187,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
 
               const SizedBox(height: 30),
 
-              // ================= TRAINERS =================
+
               Container(
                 height: 150,
                 width: 350,
@@ -223,7 +228,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
     );
   }
 
-  // ================= BOTTOM NAV =================
+
   BottomNavigationBar _bottom(int currentIndex, Function(int) onTap) {
     return BottomNavigationBar(
       backgroundColor: Colors.black,
@@ -243,6 +248,10 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
         ),
         BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Trainers'),
         BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.book_online),
+          label: 'Bookings',
+        ),
       ],
     );
   }

@@ -17,7 +17,7 @@ class _AdminLoginState extends State<AdminLogin> {
     String email = emailController.text.trim();
     String password = passwordController.text.trim();
 
-    // 🔥 你的 admin 账号
+
     if (email == "admin@lockin.com" && password == "123456") {
       Navigator.push(
         context,
@@ -85,7 +85,7 @@ class _AdminLoginState extends State<AdminLogin> {
                     ),
 
                     TextField(
-                      controller: emailController, // ✅ 加这个
+                      controller: emailController,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
@@ -105,8 +105,8 @@ class _AdminLoginState extends State<AdminLogin> {
                     ),
 
                     TextField(
-                      controller: passwordController, // ✅ 加这个
-                      obscureText: true, // 🔥 密码隐藏
+                      controller: passwordController,
+                      obscureText: true,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
@@ -123,7 +123,7 @@ class _AdminLoginState extends State<AdminLogin> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                 ),
-                onPressed: adminLogin, // 🔥 改这里
+                onPressed: adminLogin,
                 child: const Text(
                   "Admin Sign In",
                   style: TextStyle(

@@ -89,7 +89,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ================= PROFILE =================
+
   Widget _profileCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -125,7 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ================= STATS =================
+
   Widget _statsCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -187,7 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ================= MENU =================
+
   Widget _menuCard() {
     return Container(
       decoration: BoxDecoration(
@@ -201,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
               context,
               MaterialPageRoute(builder: (_) => const EditProfilePage()),
             ).then((_) {
-              loadProfile(); // 🔥 auto refresh after returning
+              loadProfile();
             });
           }),
           _menuItem(Icons.flag, "Set Fitness Goal", () {
@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 builder: (_) => const SetGoalPage(),
               ),
             ).then((_) {
-              loadProfile(); // optional refresh
+              loadProfile();
             });
           }),
           _menuItem(Icons.notifications, "Notification Settings", () {}),

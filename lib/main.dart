@@ -35,14 +35,14 @@ class MyApp extends StatelessWidget {
       title: 'LockIN App',
       theme: ThemeData.dark(),
 
-      initialRoute: '/login', // ✅ 保留这个
+      initialRoute: '/login',
 
       routes: {
 
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
 
-        // 🔥🔥🔥 这里改！
+
         '/home': (context) => const MainNavigation(),
 
         '/addWorkout': (context) => const AddWorkoutScreen(),
@@ -54,9 +54,7 @@ class MyApp extends StatelessWidget {
           return WorkoutSessionScreen(workoutType: args);
         },
 
-        // =====================
-        // ADMIN
-        // =====================
+
         '/adminLogin': (context) => const AdminLogin(),
         '/trainerLogin': (context) => TrainerLogin()
       },

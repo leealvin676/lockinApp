@@ -22,7 +22,7 @@ class _TrainerPageState extends State<TrainerPage> {
     fetchWorkoutTypes();
   }
 
-  // ================= FETCH TRAINERS =================
+
   Future<void> fetchTrainers() async {
     final data = await supabase.from('trainers').select();
 
@@ -31,7 +31,7 @@ class _TrainerPageState extends State<TrainerPage> {
     });
   }
 
-  // ================= FETCH WORKOUT TYPES =================
+
   Future<void> fetchWorkoutTypes() async {
     final data = await supabase.from('workouts').select();
 
@@ -130,7 +130,7 @@ class _TrainerPageState extends State<TrainerPage> {
     );
   }
 
-  // ================= ADD =================
+
   void _addTrainer() {
     TextEditingController nameController = TextEditingController();
     TextEditingController emailController = TextEditingController();
@@ -149,7 +149,7 @@ class _TrainerPageState extends State<TrainerPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
 
-              // NAME
+
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(hintText: 'Trainer name'),
@@ -157,7 +157,7 @@ class _TrainerPageState extends State<TrainerPage> {
 
               const SizedBox(height: 10),
 
-              // EMAIL
+
               TextField(
                 controller: emailController,
                 decoration: const InputDecoration(hintText: 'Email'),
@@ -165,7 +165,7 @@ class _TrainerPageState extends State<TrainerPage> {
 
               const SizedBox(height: 10),
 
-              // PASSWORD 🔥
+
               TextField(
                 controller: passwordController,
                 obscureText: true,
@@ -174,7 +174,7 @@ class _TrainerPageState extends State<TrainerPage> {
 
               const SizedBox(height: 10),
 
-              // TYPE
+
               DropdownButton<String>(
                 value: selectedType.isEmpty ? null : selectedType,
                 isExpanded: true,
@@ -203,13 +203,13 @@ class _TrainerPageState extends State<TrainerPage> {
                     selectedType.isEmpty) return;
 
                 try {
-                  // 🔥 STEP 1: CREATE AUTH USER
+
                   await supabase.auth.signUp(
                     email: emailController.text.trim(),
                     password: passwordController.text.trim(),
                   );
 
-                  // 🔥 STEP 2: INSERT INTO TRAINERS TABLE
+
                   await supabase.from('trainers').insert({
                     'name': nameController.text.trim(),
                     'email': emailController.text.trim(),
@@ -238,7 +238,7 @@ class _TrainerPageState extends State<TrainerPage> {
     );
   }
 
-  // ================= EDIT =================
+
   void _editTrainer(int index) {
     TextEditingController nameController =
     TextEditingController(text: trainers[index]['name']);
@@ -261,7 +261,7 @@ class _TrainerPageState extends State<TrainerPage> {
 
               const SizedBox(height: 10),
 
-              // 🔥 EMAIL FIELD
+
               TextField(controller: emailController),
 
               const SizedBox(height: 10),
@@ -308,7 +308,7 @@ class _TrainerPageState extends State<TrainerPage> {
     );
   }
 
-  // ================= DELETE =================
+
   void _deleteTrainer(int index) async {
     await supabase
         .from('trainers')

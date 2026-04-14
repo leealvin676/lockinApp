@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (error == null) {
-      // ✅ 成功
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('name', nameController.text);
 

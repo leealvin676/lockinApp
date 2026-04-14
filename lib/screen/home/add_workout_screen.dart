@@ -66,7 +66,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
       "date": DateTime.now().toIso8601String(),
     });
 
-    print("INSERT SUCCESS 🔥"); // debug
+    print("INSERT SUCCESS 🔥");
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Workout saved!")),
@@ -90,7 +90,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Cardio & Yoga → Duration
+
             if (type == "Cardio" || type == "Yoga") ...[
               Row(
                 children: const [
@@ -116,7 +116,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
               ),
             ]
 
-            // Strength → Sets & Reps
+
             else if (type == "Strength") ...[
               const SizedBox(height: 10),
               Row(
@@ -168,7 +168,7 @@ class _AddWorkoutScreenState extends State<AddWorkoutScreen> {
 
             const SizedBox(height: 10),
 
-            // Notes
+
             Row(
               children: const [
                 Icon(Icons.note_alt_outlined, color: Colors.grey, size: 20),
