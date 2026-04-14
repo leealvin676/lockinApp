@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lockinapp/screen/profile/setgoal_page.dart';
 
 const bgColor = Colors.black;
 const cardColor = Color(0xFF2C2C2C);

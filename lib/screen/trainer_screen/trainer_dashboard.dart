@@ -4,6 +4,7 @@ import 'recommendation_screen.dart';
 import 'trainer_profile_page.dart';
 import 'user_form.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lockinapp/screen/trainer_screen/user_screen.dart';
 
 class TrainerDashboard extends StatefulWidget {
   const TrainerDashboard({super.key});
@@ -32,15 +33,25 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   // LOAD BOOKINGS
   // =========================
   Future<void> loadBookings() async {
+    final user = Supabase.instance.client.auth.currentUser;
 
-    // 🔥 TEMP: get first trainer (for testing)
+    if (user == null || user.email == null) {
+      show("User not logged in properly");
+      return;
+    }
+
+    print("Trainer email: ${user.email}");
+
     final trainer = await supabase
         .from('trainers')
         .select()
-        .limit(1)
+        .eq('email', user.email!)
         .maybeSingle();
 
-    if (trainer == null) return;
+    if (trainer == null) {
+      show("Trainer not found");
+      return;
+    }
 
     trainerId = trainer['id'];
 
@@ -371,7 +382,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
-                            WorkoutScreen(userName: user["name"]),
+                            UserScreen(),
                       ),
                     );
                   },

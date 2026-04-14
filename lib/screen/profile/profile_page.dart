@@ -204,7 +204,16 @@ class _ProfilePageState extends State<ProfilePage> {
               loadProfile(); // 🔥 auto refresh after returning
             });
           }),
-          _menuItem(Icons.flag, "Set Fitness Goal", () {}),
+          _menuItem(Icons.flag, "Set Fitness Goal", () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const SetGoalPage(),
+              ),
+            ).then((_) {
+              loadProfile(); // optional refresh
+            });
+          }),
           _menuItem(Icons.notifications, "Notification Settings", () {}),
         ],
       ),

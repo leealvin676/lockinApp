@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TrainerProfilePage extends StatefulWidget {
   const TrainerProfilePage({super.key});
@@ -13,11 +14,53 @@ class _TrainerProfilePageState extends State<TrainerProfilePage> {
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
 
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadProfile(); // 🔥 NEW
+  }
+
+  // =========================
+  // LOAD PROFILE FROM SUPABASE
+  // =========================
+  Future<void> loadProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) return;
+
+    final data = await Supabase.instance.client
+        .from('trainers')
+        .select()
+        .eq('email', user.email ?? "")
+        .maybeSingle();
+
+    if (data != null) {
+      nameController.text = data['name'] ?? "";
+      emailController.text = data['email'] ?? "";
+      phoneController.text = data['phone'] ?? "";
+    } else {
+      // fallback (first time)
+      emailController.text = user.email ?? "";
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  // =========================
+  // VALIDATION
+  // =========================
   bool isValidEmail(String email) {
     return RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$').hasMatch(email);
   }
 
-  void saveProfile() {
+  // =========================
+  // SAVE TO SUPABASE
+  // =========================
+  Future<void> saveProfile() async {
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
         phoneController.text.isEmpty) {
@@ -30,7 +73,22 @@ class _TrainerProfilePageState extends State<TrainerProfilePage> {
       return;
     }
 
-    show("Profile saved (local)");
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+
+      if (user == null) return;
+
+      await Supabase.instance.client.from('trainers').upsert({
+        'email': emailController.text.trim(),
+        'name': nameController.text.trim(),
+        'phone': phoneController.text.trim(),
+      });
+
+      show("Profile saved ✅");
+    } catch (e) {
+      show("Error saving profile");
+      print(e);
+    }
   }
 
   void show(String msg) {
@@ -48,7 +106,9 @@ class _TrainerProfilePageState extends State<TrainerProfilePage> {
         backgroundColor: Colors.black,
       ),
 
-      body: Padding(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -70,11 +130,15 @@ class _TrainerProfilePageState extends State<TrainerProfilePage> {
 
             const SizedBox(height: 20),
 
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue),
-              onPressed: saveProfile,
-              child: const Text("Save"),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                ),
+                onPressed: saveProfile,
+                child: const Text("Save"),
+              ),
             )
           ],
         ),
@@ -90,8 +154,13 @@ class _TrainerProfilePageState extends State<TrainerProfilePage> {
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: const TextStyle(color: Colors.grey),
           filled: true,
           fillColor: Colors.grey[900],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );

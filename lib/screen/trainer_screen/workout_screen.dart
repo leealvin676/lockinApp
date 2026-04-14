@@ -17,6 +17,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   final titleController = TextEditingController();
   final typeController = TextEditingController();
 
+  List plans = [];
+  bool isLoadingPlan = true;
+
   String selectedGoal = "";
   List workoutTypes = [];
 
@@ -33,7 +36,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     super.initState();
     loadWorkouts();
     loadWorkoutTypes();
-    loadBookings(); // 🔥 NEW
+    loadBookings();
+    loadWorkoutPlan();
   }
 
   Future<void> loadTrainers() async {
@@ -47,6 +51,22 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     setState(() {
       trainers = data;
       selectedTrainerId = null; // reset selection
+    });
+  }
+
+  Future<void> loadWorkoutPlan() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user == null) return;
+
+    final data = await Supabase.instance.client
+        .from('workout_plans')
+        .select()
+        .eq('user_name', user.email ?? "");
+
+    setState(() {
+      plans = data;
+      isLoadingPlan = false;
     });
   }
 
@@ -101,11 +121,15 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   // =========================
   String? getBookingStatus(String goal) {
     final booking = userBookings.firstWhere(
-          (b) => b['goal'] == goal,
+          (b) =>
+      b['goal'] == goal &&
+          b['trainer_id'] == selectedTrainerId,
       orElse: () => {},
     );
 
     return booking.isEmpty ? null : booking['status'];
+
+
   }
 
   // =========================
@@ -306,9 +330,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return statusBox("✅ Trainer Accepted", Colors.green);
     }
 
+// 🔥 allow retry if declined
     if (status == "declined") {
-      return statusBox("❌ Declined", Colors.red);
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: bookTrainer,
+          child: const Text("Book Again"),
+        ),
+      );
     }
+
 
     return SizedBox(
       width: double.infinity,
@@ -318,6 +350,59 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ),
         onPressed: bookTrainer,
         child: const Text("Book Trainer"),
+      ),
+    );
+  }
+
+  Widget workoutPlanCard() {
+    if (isLoadingPlan) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E), // SAME as your cards
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          const Text(
+            "Workout Plan",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          if (plans.isEmpty)
+            const Text(
+              "No workout plan yet",
+              style: TextStyle(color: Colors.grey),
+            )
+          else ...[
+            Text(
+              plans.last['title'] ?? "",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 5),
+
+            Text(
+              plans.last['description'] ?? "",
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -384,6 +469,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             const SizedBox(height: 20),
 
             bookingCard(),
+
+            const SizedBox(height: 20),
+
+
+            const SizedBox(height: 20),
 
             const SizedBox(height: 20),
 

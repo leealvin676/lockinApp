@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+
 const bgColor = Colors.black;
 const cardColor = Color(0xFF2C2C2C);
 const inputColor = Color(0xFF3A3A3A);
