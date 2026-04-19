@@ -26,6 +26,9 @@ class _ProgressPageState extends State<ProgressPage> {
   int totalCalories = 0;
   int streak = 0;
   bool isLoading = true;
+  double improvement = 0;
+  double avgTime = 0;
+  String badge = "";
 
   @override
   void initState() {
@@ -65,6 +68,48 @@ class _ProgressPageState extends State<ProgressPage> {
     return streak;
   }
 
+  double calculateImprovement(List<Map<String, dynamic>> data) {
+    final now = DateTime.now();
+
+    int thisWeek = 0;
+    int lastWeek = 0;
+
+    for (var w in data) {
+      final date = DateTime.tryParse(w['date'] ?? '');
+      if (date == null) continue;
+
+      if (date.isAfter(now.subtract(const Duration(days: 7)))) {
+        thisWeek += (w['duration'] ?? 0) as int;
+      } else if (date.isAfter(now.subtract(const Duration(days: 14)))) {
+        lastWeek += (w['duration'] ?? 0) as int;
+      }
+    }
+
+    if (lastWeek == 0) {
+      return thisWeek > 0 ? 999 : 0;
+
+    }
+    return ((thisWeek - lastWeek) / lastWeek) * 100;
+  }
+
+  double getAverageTime() {
+    if (totalWorkouts == 0) return 0;
+    return totalMinutes / totalWorkouts;
+  }
+
+  String getBadge() {
+    if (streak >= 7) return "🔥 Pro";
+    if (streak >= 3) return "💪 Active";
+    return "🌱 Beginner";
+  }
+
+  String getSmartFeedback() {
+    if (totalMinutes >= dailyGoal) return "🔥 Goal achieved!";
+    if (streak >= 5) return "💪 Strong consistency!";
+    if (totalWorkouts == 0) return "Start today 🚀";
+    return "Keep going!";
+  }
+
 
   String getMotivation() {
     if (streak >= 7) return "🔥 On fire! Keep it up!";
@@ -79,6 +124,9 @@ class _ProgressPageState extends State<ProgressPage> {
 
     int minutes = 0;
     int calories = 0;
+    improvement = calculateImprovement(data);
+    avgTime = getAverageTime();
+    badge = getBadge();
 
     List<double> tempCalories = List.filled(7, 0);
     List<double> tempMinutes = List.filled(7, 0);
@@ -137,6 +185,11 @@ class _ProgressPageState extends State<ProgressPage> {
 
       weeklyCalories = tempCalories;
       weeklyMinutes = tempMinutes;
+
+
+      avgTime = getAverageTime();
+      badge = getBadge();
+      improvement = calculateImprovement(data);
 
       isLoading = false;
     });
@@ -242,6 +295,51 @@ class _ProgressPageState extends State<ProgressPage> {
             const SizedBox(width: 10),
             Expanded(child: _card(Icons.fitness_center, "$totalWorkouts", "Total\nWorkouts", Colors.green)),
           ],
+        ),
+        const SizedBox(height: 10),
+
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              Text(
+                "Level: $badge",
+                style: const TextStyle(color: Colors.white),
+              ),
+
+              const SizedBox(height: 5),
+
+              Text(
+                "Avg Workout: ${avgTime.toStringAsFixed(1)} min",
+                style: const TextStyle(color: textGrey),
+              ),
+
+              const SizedBox(height: 5),
+
+              Text(
+                improvement == 999
+                    ? "New progress 🚀"
+                    : "Progress: ${improvement.toStringAsFixed(0)}%",
+                style: TextStyle(
+                  color: improvement >= 0 ? Colors.green : Colors.red,
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              Text(
+                getSmartFeedback(),
+                style: const TextStyle(color: textGrey),
+              ),
+            ],
+          ),
         ),
 
       ],
