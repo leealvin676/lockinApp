@@ -29,7 +29,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   List<Map<String, dynamic>> workouts = [];
 
-  // 🔥 NEW: MULTIPLE BOOKINGS
+
   List<Map<String, dynamic>> userBookings = [];
 
   @override
@@ -51,7 +51,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
     setState(() {
       trainers = data;
-      selectedTrainerId = null; // reset selection
+      selectedTrainerId = null;
     });
   }
 
@@ -71,9 +71,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
-  // =========================
-  // LOAD WORKOUTS (SQLite)
-  // =========================
+
   Future<void> loadWorkouts() async {
     final data = await DBHelper().getWorkouts();
 
@@ -82,9 +80,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
-  // =========================
-  // LOAD WORKOUT TYPES (Supabase)
-  // =========================
+
   Future<void> loadWorkoutTypes() async {
     final data = await Supabase.instance.client
         .from('workouts')
@@ -99,9 +95,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
-  // =========================
-  // LOAD USER BOOKINGS
-  // =========================
+
   Future<void> loadBookings() async {
     final user = Supabase.instance.client.auth.currentUser;
 
@@ -117,9 +111,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
-  // =========================
-  // GET STATUS BY TYPE
-  // =========================
+
   String? getBookingStatus(String goal) {
     final booking = userBookings.firstWhere(
           (b) =>
@@ -133,9 +125,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
   }
 
-  // =========================
-  // BOOK TRAINER
-  // =========================
+
   Future<void> bookTrainer() async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
@@ -152,7 +142,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         'user_name': user.email,
         'goal': selectedGoal.toLowerCase(),
         'trainer_id': selectedTrainerId,
-        'trainer_name': selectedTrainerName, // ✅ ADD THIS
+        'trainer_name': selectedTrainerName,
         'status': 'pending',
       });
 
@@ -165,9 +155,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  // =========================
-  // CREATE WORKOUT
-  // =========================
+
   Future<void> createWorkout() async {
     if (titleController.text.isEmpty || typeController.text.isEmpty) {
       show("Fill all fields");
@@ -191,9 +179,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     await loadWorkouts();
   }
 
-  // =========================
-  // DELETE WORKOUT
-  // =========================
+
   Future<void> deleteWorkout(int id) async {
     await DBHelper().deleteWorkout(id);
     await loadWorkouts();
@@ -205,9 +191,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // =========================
-  // BOOKING CARD
-  // =========================
+
   Widget bookingCard() {
     return Container(
       width: double.infinity,
@@ -255,13 +239,13 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               setState(() {
                 selectedGoal = value!;
               });
-              loadTrainers(); // 🔥 IMPORTANT
+              loadTrainers();
             },
           ),
 
           const SizedBox(height: 10),
 
-// 🔥 TRAINER LIST
+
           trainers.isEmpty
               ? const Text(
             "No trainers available",
@@ -275,7 +259,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   onTap: () {
                     setState(() {
                       selectedTrainerId = t['id'];
-                      selectedTrainerName = t['name']; // ✅ ADD THIS
+                      selectedTrainerName = t['name'];
                     });
                   },
                 child: Container(
@@ -319,9 +303,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  // =========================
-  // BOOKING BUTTON LOGIC
-  // =========================
+
   Widget bookingButton() {
     final status = getBookingStatus(selectedGoal);
 
@@ -333,7 +315,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       return statusBox("✅ Trainer Accepted", Colors.green);
     }
 
-// 🔥 allow retry if declined
+
     if (status == "declined") {
       return SizedBox(
         width: double.infinity,
@@ -366,7 +348,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // SAME as your cards
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -426,9 +408,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  // =========================
-  // UI
-  // =========================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -557,9 +537,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  // =========================
-  // ADD WORKOUT DIALOG
-  // =========================
+
   void openAddDialog() {
     showModalBottomSheet(
       context: context,

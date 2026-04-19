@@ -13,8 +13,7 @@ class _TrainerLoginState extends State<TrainerLogin> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
-  bool isLoading = false; // 🔥 loading state
-
+  bool isLoading = false;
   @override
   void dispose() {
     usernameController.dispose();
@@ -100,7 +99,7 @@ class _TrainerLoginState extends State<TrainerLogin> {
 
                 const SizedBox(height: 25),
 
-                // EMAIL
+
                 TextField(
                   controller: usernameController,
                   style: const TextStyle(color: Colors.white),
@@ -109,7 +108,7 @@ class _TrainerLoginState extends State<TrainerLogin> {
 
                 const SizedBox(height: 12),
 
-                // PASSWORD
+
                 TextField(
                   controller: passwordController,
                   obscureText: true,
@@ -132,7 +131,7 @@ class _TrainerLoginState extends State<TrainerLogin> {
                   ],
                 ),
 
-                // LOGIN BUTTON
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

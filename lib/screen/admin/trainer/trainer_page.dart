@@ -292,7 +292,7 @@ class _TrainerPageState extends State<TrainerPage> {
                     .from('trainers')
                     .update({
                   'name': nameController.text.trim(),
-                  'email': emailController.text.trim(), // 🔥 NEW
+                  'email': emailController.text.trim(),
                   'type': selectedType,
                 })
                     .eq('id', trainers[index]['id']);

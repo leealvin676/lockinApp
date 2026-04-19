@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final supabase = Supabase.instance.client;
 
-  // ================= REGISTER =================
+
   Future<String?> register(String name, String email, String password) async {
     try {
       final response = await supabase.auth.signUp(
@@ -31,7 +31,7 @@ class AuthService {
     }
   }
 
-  // ================= LOGIN =================
+
   Future<bool> login(String email, String password) async {
 
     if (email == "admin@lockin.com" && password == "123456") {
@@ -58,7 +58,7 @@ class AuthService {
     }
   }
 
-  // ================= LOGOUT =================
+
   Future<void> logout() async {
     await supabase.auth.signOut();
 

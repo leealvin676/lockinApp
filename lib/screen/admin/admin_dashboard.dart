@@ -80,7 +80,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
         Supabase.instance.client.from('profiles').select(),
         Supabase.instance.client.from('workouts').select(),
         Supabase.instance.client.from('trainers').select(),
-        Supabase.instance.client.from('bookings').select(), // ✅ ADD BACK
+        Supabase.instance.client.from('bookings').select(),
       ]),
       builder: (context, snapshot) {
 
@@ -267,7 +267,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
 
                     const SizedBox(height: 10),
 
-                    buildChart(), // 🔥 THIS IS YOUR CHART
+                    buildChart(),
                   ],
                 ),
               ),

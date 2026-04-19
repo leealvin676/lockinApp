@@ -25,16 +25,14 @@ class _UserScreenState extends State<UserScreen> {
     loadUsers();
   }
 
-  // =========================
-  // LOAD USERS FROM SUPABASE
-  // =========================
+
   Future<void> loadUsers() async {
     try {
       final authUser = supabase.auth.currentUser;
 
       if (authUser == null || authUser.email == null) return;
 
-      // 🔥 GET TRAINER
+
       final trainer = await supabase
           .from('trainers')
           .select()
@@ -43,7 +41,7 @@ class _UserScreenState extends State<UserScreen> {
 
       if (trainer == null) return;
 
-      // 🔥 GET ACCEPTED BOOKINGS
+
       final data = await supabase
           .from('bookings')
           .select()
@@ -96,7 +94,7 @@ class _UserScreenState extends State<UserScreen> {
 
             const SizedBox(height: 10),
 
-            // ADD USER BUTTON
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -128,9 +126,7 @@ class _UserScreenState extends State<UserScreen> {
     );
   }
 
-  // =========================
-  // USER CARD
-  // =========================
+
   Widget userCard(BuildContext context, Map user) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -142,7 +138,7 @@ class _UserScreenState extends State<UserScreen> {
       child: Column(
         children: [
 
-          // USER INFO
+
           Row(
             children: [
               const CircleAvatar(
@@ -173,7 +169,7 @@ class _UserScreenState extends State<UserScreen> {
 
           const SizedBox(height: 15),
 
-          // BUTTONS
+
           Row(
             children: [
               Expanded(

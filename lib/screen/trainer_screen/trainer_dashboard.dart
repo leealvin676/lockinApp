@@ -20,7 +20,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
   List<Map<String, dynamic>> bookings = [];
   final supabase = Supabase.instance.client;
 
-  String trainerId = ""; // 🔥 will store trainer id
+  String trainerId = "";
   String searchQuery = "";
 
   @override
@@ -29,9 +29,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     loadBookings().then((_) => loadUsers());
   }
 
-  // =========================
-  // LOAD BOOKINGS
-  // =========================
+
   Future<void> loadBookings() async {
     final user = Supabase.instance.client.auth.currentUser;
 
@@ -85,16 +83,14 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     });
   }
 
-  // =========================
-  // ACCEPT BOOKING
-  // =========================
+
   Future<void> acceptBooking(Map booking) async {
     await supabase
         .from('bookings')
         .update({'status': 'accepted'})
         .eq('id', booking['id']);
 
-    // 🔥 move to users list
+
     setState(() {
       users.add({
         "name": booking["user_name"],
@@ -105,14 +101,12 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     });
 
     await loadBookings();
-    await loadUsers(); // ✅ ADD THIS
+    await loadUsers();
 
     show("User accepted");
   }
 
-  // =========================
-  // DECLINE BOOKING
-  // =========================
+
   Future<void> declineBooking(Map booking) async {
     await supabase
         .from('bookings')
@@ -195,7 +189,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
               const SizedBox(height: 15),
 
-              // SEARCH
+
               TextField(
                 onChanged: (val) => setState(() => searchQuery = val),
                 style: const TextStyle(color: Colors.white),
@@ -213,9 +207,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
               const SizedBox(height: 20),
 
-              // =========================
-              // BOOKINGS
-              // =========================
+
               const Text("Pending Bookings",
                   style: TextStyle(color: Colors.white, fontSize: 18)),
 
@@ -245,9 +237,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
 
               const SizedBox(height: 20),
 
-              // =========================
-              // USERS
-              // =========================
+
               const Text("Users",
                   style: TextStyle(color: Colors.white, fontSize: 18)),
 
@@ -273,9 +263,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // =========================
-  // BOOKING CARD
-  // =========================
+
   Widget bookingCard(Map booking) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -354,9 +342,7 @@ class _TrainerDashboardState extends State<TrainerDashboard> {
     );
   }
 
-  // =========================
-  // USER CARD
-  // =========================
+
   Widget userCard(Map user) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

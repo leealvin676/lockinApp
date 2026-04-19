@@ -22,9 +22,7 @@ class _TrainerProfilePageState extends State<TrainerProfilePage> {
     loadProfile(); // 🔥 NEW
   }
 
-  // =========================
-  // LOAD PROFILE FROM SUPABASE
-  // =========================
+
   Future<void> loadProfile() async {
     final user = Supabase.instance.client.auth.currentUser;
 

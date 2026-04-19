@@ -67,7 +67,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
 
             const SizedBox(height: 20),
 
-            // BUTTON
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -84,7 +84,7 @@ class _RecommendationScreenState extends State<RecommendationScreen> {
 
             const SizedBox(height: 30),
 
-            // DISPLAY SAVED DATA
+
             if (savedRecommendation.isNotEmpty)
               Container(
                 width: double.infinity,
