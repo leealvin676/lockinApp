@@ -12,6 +12,8 @@ class _AdminBookingPageState extends State<AdminBookingPage> {
   final supabase = Supabase.instance.client;
 
   List bookings = [];
+  List filteredBookings = [];
+  TextEditingController searchController = TextEditingController();
   bool isLoading = true;
 
   @override
@@ -29,6 +31,7 @@ class _AdminBookingPageState extends State<AdminBookingPage> {
 
       setState(() {
         bookings = data;
+        filteredBookings = data;
         isLoading = false;
       });
     } catch (e) {
@@ -37,6 +40,19 @@ class _AdminBookingPageState extends State<AdminBookingPage> {
         isLoading = false;
       });
     }
+  }
+
+  void search(String query) {
+    final results = bookings.where((b) {
+      final user = (b['user_name'] ?? '').toString().toLowerCase();
+      final trainer = (b['trainer_name'] ?? '').toString().toLowerCase();
+      return user.contains(query.toLowerCase()) ||
+          trainer.contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      filteredBookings = results;
+    });
   }
 
   Color statusColor(String status) {
@@ -71,10 +87,28 @@ class _AdminBookingPageState extends State<AdminBookingPage> {
 
             const SizedBox(height: 20),
 
+            TextField(
+              controller: searchController,
+              onChanged: search,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Search user or trainer...",
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: const Color(0xFF333333),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : bookings.isEmpty
+                  : filteredBookings.isEmpty
                   ? const Center(
                 child: Text(
                   "No bookings yet",
@@ -82,9 +116,9 @@ class _AdminBookingPageState extends State<AdminBookingPage> {
                 ),
               )
                   : ListView.builder(
-                itemCount: bookings.length,
+                itemCount: filteredBookings.length,
                 itemBuilder: (context, index) {
-                  final b = bookings[index];
+                  final b = filteredBookings[index];
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),

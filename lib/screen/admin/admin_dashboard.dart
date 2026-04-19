@@ -4,6 +4,7 @@ import 'package:lockinapp/screen/admin/trainer/trainer_page.dart';
 import 'package:lockinapp/screen/admin/user/users_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lockinapp/screen/admin/trainer/booking_page.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class AdminDashBoard extends StatefulWidget {
   const AdminDashBoard({super.key});
@@ -14,6 +15,8 @@ class AdminDashBoard extends StatefulWidget {
 
 class _AdminDashBoardState extends State<AdminDashBoard> {
   int _currentIndex = 0;
+  int totalBookings = 0;
+  Map<String, int> workoutStats = {};
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +80,7 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
         Supabase.instance.client.from('profiles').select(),
         Supabase.instance.client.from('workouts').select(),
         Supabase.instance.client.from('trainers').select(),
+        Supabase.instance.client.from('bookings').select(), // ✅ ADD BACK
       ]),
       builder: (context, snapshot) {
 
@@ -94,11 +98,23 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
           totalUsers = (data[0] as List).length;
           totalWorkouts = (data[1] as List).length;
           totalTrainers = (data[2] as List).length;
+
+          final bookings = data[3] as List;
+          totalBookings = bookings.length;
+
+          Map<String, int> tempStats = {};
+          for (var b in bookings) {
+            final goal = (b['goal'] ?? "unknown").toString();
+            tempStats[goal] = (tempStats[goal] ?? 0) + 1;
+          }
+
+          workoutStats = tempStats;
         }
 
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+        return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
@@ -221,10 +237,97 @@ class _AdminDashBoardState extends State<AdminDashBoard> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 30),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF444444),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    const Text(
+                      'Booking Analytics',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      'Total Bookings: $totalBookings',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    buildChart(), // 🔥 THIS IS YOUR CHART
+                  ],
+                ),
+              ),
             ],
           ),
+        ),
         );
       },
+    );
+  }
+
+  Widget buildChart() {
+    if (workoutStats.isEmpty) {
+      return const Text(
+        "No data",
+        style: TextStyle(color: Colors.white),
+      );
+    }
+
+    final keys = workoutStats.keys.toList();
+
+    return SizedBox(
+      height: 200,
+      child: BarChart(
+        BarChartData(
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(showTitles: true),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  int index = value.toInt();
+                  if (index >= keys.length) return const SizedBox();
+
+                  return Text(
+                    keys[index],
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 10),
+                  );
+                },
+              ),
+            ),
+          ),
+          barGroups: List.generate(keys.length, (i) {
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: workoutStats[keys[i]]!.toDouble(),
+                  width: 14,
+                  color: Colors.red,
+                )
+              ],
+            );
+          }),
+        ),
+      ),
     );
   }
 
